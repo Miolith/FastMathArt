@@ -1,15 +1,14 @@
+#include "render.h"
+
 #include <iostream>
 #include <string_view>
 
-#include "render.h"
-
-
-void render_element(Wait* elem, int width, int height)
+void render_element(Wait *elem, int width, int height)
 {
     std::cout << "Waiting for " << elem->seconds << " seconds" << std::endl;
 }
 
-void cast_then_render_element(SceneElement* elem, int width, int height)
+void cast_then_render_element(SceneElement *elem, int width, int height)
 {
     if (elem == nullptr)
     {
@@ -25,14 +24,16 @@ void cast_then_render_element(SceneElement* elem, int width, int height)
 
     switch ((ElementType)elem->type)
     {
-    case WAIT: render_element(reinterpret_cast<Wait*>(elem->elem), width, height);
+    case WAIT:
+        render_element(reinterpret_cast<Wait *>(elem->elem), width, height);
         break;
     default:
         std::cout << "Unknown element type " << elem->type << std::endl;
     }
 }
 
-void render_scene(SceneElement* elem, int width, int height, std::string_view filename)
+void render_scene(SceneElement *elem, int width, int height,
+                  std::string_view filename)
 {
     cast_then_render_element(elem, width, height);
 }
