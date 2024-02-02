@@ -10,7 +10,7 @@ enum ElementType
 
 struct SceneElement
 {
-    int type;
+    ElementType type;
     void* elem;
     SceneElement* next;
 };

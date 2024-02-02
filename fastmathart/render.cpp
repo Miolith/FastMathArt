@@ -22,7 +22,7 @@ void cast_then_render_element(SceneElement *elem, int width, int height)
         return;
     }
 
-    switch ((ElementType)elem->type)
+    switch (elem->type)
     {
     case WAIT:
         render_element(reinterpret_cast<Wait *>(elem->elem), width, height);
