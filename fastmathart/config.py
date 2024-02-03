@@ -43,3 +43,13 @@ class presets:
         width = 720
         height = 1280
         frames_per_second = 30
+    
+    class SD480p_30fps:
+        width = 480
+        height = 854
+        frames_per_second = 30
+    
+    class HDInstagramSquare:
+        width = 1080
+        height = 1080
+        frames_per_second = 30

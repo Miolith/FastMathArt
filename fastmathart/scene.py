@@ -12,7 +12,7 @@ class SceneBuilder:
     _head : SceneElement = None
     _tail : SceneElement = None
 
-    def add(self, *args):
+    def append(self, *args):
         for arg in args:
             element = SceneElement()
             element.elem = ctypes.cast(ctypes.pointer(arg), ctypes.POINTER(ctypes.c_void_p))
@@ -24,3 +24,4 @@ class SceneBuilder:
             else:
                 self._tail.next = ctypes.cast(ctypes.pointer(arg), ctypes.POINTER(ctypes.c_void_p))
             self._tail = element
+        return self

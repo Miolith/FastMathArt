@@ -1,9 +1,20 @@
-import fastmathart as fma
+from fastmathart import *
 
-fma.config.load_preset(fma.presets.HD720p_30fps)
+config.load_preset(presets.HD720p_30fps)
 
-scene = fma.SceneBuilder()
+scene = SceneBuilder()
 
-scene.add(fma.Wait(seconds=4.0))
+circle = Circle(
+    radius = 0.5,
+    thickness = 0.1,
+    color=RED,
+    fill=None,
+    position=CENTER
+)
 
-fma.render(scene, filename="example.mp4")
+scene.append(
+    Place(circle),
+    Wait(seconds=4.0)
+)
+
+render(scene, filename="example.mp4")
