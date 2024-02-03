@@ -17,13 +17,11 @@ void save_to_video_file(uint8_t framebuffer[], std::string_view filename, int fp
 
     // Save the framebuffer to a video file
     // execute ffmpeg
-    std::string command = "ffmpeg -y -f rawvideo -vcodec rawvideo -s "
-                + std::to_string(width)
-                + "x"
-                + std::to_string(height)
+    std::string command = "ffmpeg  -y -f rawvideo -s "
+                + std::to_string(width) + "x" + std::to_string(height)
                 + " -pix_fmt rgb24 -r "
                 + std::to_string(fps) +
-                " -i - -an -vcodec mpeg4 -q:v 5 -f mp4 "
+                " -i - -an -x264opts opencl -vcodec h264 -q:v 5 -f mp4 "
                 + std::string(filename);
 
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "w"), pclose);

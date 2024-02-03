@@ -1,6 +1,7 @@
 from typing import List, Union
 from fastmathart.cbindings import lib
 import ctypes
+from fastmathart.config import config
 
 def render_frames(
         scene,
@@ -24,4 +25,9 @@ def render(
         filename: str,
     ):
     """Render a scene to a video file."""
-    lib.render(scene._head, 50, 50, ctypes.c_char_p(filename.encode('utf-8')))
+    lib.render(
+        scene._head,
+        ctypes.c_int(config.width),
+        ctypes.c_int(config.height),
+        ctypes.c_char_p(filename.encode('utf-8'))
+    )

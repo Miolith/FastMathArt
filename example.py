@@ -1,8 +1,6 @@
 import fastmathart as fma
 
-fma.config.width = 1920
-fma.config.height = 1080
-fma.config.frames_per_second = 60
+fma.config.load_preset(fma.presets.HD720p_30fps)
 
 scene = fma.SceneBuilder()
 
