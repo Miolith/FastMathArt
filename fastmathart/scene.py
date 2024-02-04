@@ -25,3 +25,6 @@ class SceneBuilder:
                 self._tail.next = ctypes.cast(ctypes.pointer(arg), ctypes.POINTER(ctypes.c_void_p))
             self._tail = element
         return self
+    
+    def get_scene(self):
+        return self._head

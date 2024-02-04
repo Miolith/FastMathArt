@@ -44,6 +44,17 @@ void render_element(Wait *elem, int width, int height)
     save_to_video_file(pixel_list.get(), "wait.mp4", fps, width, height, frames);
 }
 
+void render_element(Place *elem, int width, int height)
+{
+    std::cout << "Placing " << elem->obj_count << " objects" << std::endl;
+    int fps = 24;
+    int frames = 1;
+    
+    auto pixel_list = std::make_unique<uint8_t[]>(width * height * frames * 3);
+
+    save_to_video_file(pixel_list.get(), "place.mp4", fps, width, height, frames);
+}
+
 void cast_then_render_element(SceneElement *elem, int width, int height)
 {
 
@@ -58,6 +69,8 @@ void cast_then_render_element(SceneElement *elem, int width, int height)
     case WAIT:
         render_element(reinterpret_cast<Wait *>(elem->elem), width, height);
         break;
+    case PLACE:
+        render_element(reinterpret_cast<Place *>(elem->elem), width, height);
     default:
         std::cout << "Unknown element type " << elem->type << std::endl;
     }

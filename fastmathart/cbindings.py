@@ -5,7 +5,8 @@ import glob
 
 ElementType = {
     "NOTHING": 0,
-    "WAIT": 1
+    "WAIT": 1,
+    "PLACE": 2,
 }
 
 lib_file= glob.glob("build/lib*/fastmathart/cbindings*")

@@ -6,6 +6,7 @@ enum ElementType
 {
     NOTHING = 0,
     WAIT = 1,
+    PLACE = 2,
 };
 
 struct SceneElement
@@ -18,6 +19,13 @@ struct SceneElement
 struct Wait
 {
     float seconds;
+};
+
+struct Place
+{
+    void** obj_list;
+    int* obj_types;
+    int obj_count;
 };
 
 void render_scene(SceneElement* elem, int width, int height, std::string_view filename);
