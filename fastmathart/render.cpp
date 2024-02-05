@@ -79,12 +79,11 @@ void cast_then_render_element(SceneElement *elem, int width, int height)
 void render_scene(SceneElement *elem, int width, int height,
                   std::string_view filename)
 {
-    if (elem == nullptr)
-    {
-        std::cout << "Null scene" << std::endl;
-        return;
-    }
-
     std::cout << "Rendering scene to " << filename << std::endl;
-    cast_then_render_element(elem, width, height);
+
+    while (elem != nullptr)
+    {
+        cast_then_render_element(elem, width, height);
+        elem = elem->next;
+    }
 }
