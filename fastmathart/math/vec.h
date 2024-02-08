@@ -206,4 +206,4 @@ namespace math
                     u.x * v.y - u.y * v.x);
     }
 
-}
+} // namespace math

@@ -1,9 +1,13 @@
-#include <cstdint>
 #include "pixelUtils.h"
-    
+
+#include <cstdint>
 
 color_t<Oklab>::color_t(float l, float a, float b)
     : vec3<float>(l, a, b)
+{}
+
+color_t<RGB_8>::color_t(uint8_t r, uint8_t g, uint8_t b)
+    : vec3<uint8_t>(r, g, b)
 {}
 
 color_t<Oklab> color_t<RGB_8>::toOklab()
@@ -29,7 +33,9 @@ color_t<Oklab> color_t<RGB_8>::toOklab()
 
 color_t<RGB_f32> color_t<RGB_8>::toRGB_f32()
 {
-    return color_t<RGB_f32>(this->r / 255.0f, this->g / 255.0f, this->b / 255.0f);
+    return color_t<RGB_f32>{ static_cast<float>(this->r) / 255.0f,
+                             static_cast<float>(this->g) / 255.0f,
+                             static_cast<float>(this->b) / 255.0f };
 }
 
 color_t<RGB_8> color_t<RGB_f32>::toRGB_8()
@@ -41,9 +47,12 @@ color_t<RGB_8> color_t<RGB_f32>::toRGB_8()
 
 color_t<Oklab> color_t<RGB_f32>::toOklab()
 {
-    float l = 0.4122214708f * this->r + 0.5363325363f * this->g + 0.0514459929f * this->b;
-    float m = 0.2119034982f * this->r + 0.6806995451f * this->g + 0.1073969566f * this->b;
-    float s = 0.0883024619f * this->r + 0.2817188376f * this->g + 0.6299787005f * this->b;
+    float l = 0.4122214708f * this->r + 0.5363325363f * this->g
+        + 0.0514459929f * this->b;
+    float m = 0.2119034982f * this->r + 0.6806995451f * this->g
+        + 0.1073969566f * this->b;
+    float s = 0.0883024619f * this->r + 0.2817188376f * this->g
+        + 0.6299787005f * this->b;
 
     float l_ = std::cbrt(l);
     float m_ = std::cbrt(m);

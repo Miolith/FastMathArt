@@ -18,8 +18,8 @@ enum ShapeType
 struct SceneElement
 {
     ElementType type;
-    void* elem;
-    SceneElement* next;
+    void *elem;
+    SceneElement *next;
 };
 
 struct Wait
@@ -29,8 +29,8 @@ struct Wait
 
 struct Place
 {
-    void** obj_list;
-    ShapeType* obj_types;
+    void **obj_list;
+    ShapeType *obj_types;
     int obj_count;
 };
 
@@ -46,4 +46,5 @@ struct Circle
     float *fill;
 };
 
-void render_scene(SceneElement* elem, int width, int height, std::string_view filename);
+void render_scene(SceneElement *elem, int width, int height,
+                  std::string_view filename);
