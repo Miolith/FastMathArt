@@ -19,7 +19,7 @@ class SceneBuilder:
             element.elem = ctypes.cast(ctypes.pointer(arg), ctypes.POINTER(ctypes.c_void_p))
 
             class_name = arg.__class__.__name__.upper()
-            element.type = cbind.ElementType.get(class_name, 0)
+            element.type = cbind.ElementType.get(class_name, cbind.ElementType["NOTHING"])
             if self._head is None:
                 self._head = element
             else:

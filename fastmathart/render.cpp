@@ -7,11 +7,10 @@
 
 #include "render.h"
 
-void save_to_video_file(uint8_t framebuffer[], std::string_view filename, int fps, int width, int height, int frames)
+void save_to_video_file(uint8_t video_buffer[], std::string_view filename, int fps, int width, int height, int frames)
 {
     std::cout << "Saving to video file " << filename << std::endl;
     std::cout << "Frame rate: " << fps << std::endl;
-    std::cout << "Frame count: " << frames << std::endl;
     std::cout << "Frame width: " << width << std::endl;
     std::cout << "Frame height: " << height << std::endl;
 
@@ -30,7 +29,7 @@ void save_to_video_file(uint8_t framebuffer[], std::string_view filename, int fp
         std::cerr << "popen() failed!" << std::endl;
         return;
     }
-    fwrite(framebuffer, 1, width * height * frames * 3, pipe.get());
+    fwrite(video_buffer, 1, width * height * frames * 3, pipe.get());
 }
 
 void render_element(Wait *elem, int width, int height)
@@ -42,6 +41,24 @@ void render_element(Wait *elem, int width, int height)
     auto pixel_list = std::make_unique<uint8_t[]>(width * height * frames * 3);
 
     save_to_video_file(pixel_list.get(), "wait.mp4", fps, width, height, frames);
+}
+
+void place_animation(Place *elem, int width, int height, int frames, int fps)
+{
+    for(int i = 0; i < frames; i++)
+    {
+        for(int j = 0; j < elem->obj_count; j++)
+        {
+            switch(elem->obj_types[j])
+            {
+                case CIRCLE:
+                    (void)reinterpret_cast<Circle*>(elem->obj_list[j]);
+                break;
+                default:
+                    std::cout << "Unknown object type " << elem->obj_types[j] << std::endl;
+            }
+        }
+    }
 }
 
 void render_element(Place *elem, int width, int height)
