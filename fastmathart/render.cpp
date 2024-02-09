@@ -45,35 +45,26 @@ void render_wait_element(Wait *elem, int width, int height)
                        frames);
 }
 
-void place_animation(Place *elem, int width, int height, int frames, int fps)
-{
-    for (int i = 0; i < frames; i++)
-    {
-        for (int j = 0; j < elem->obj_count; j++)
-        {
-            switch (elem->obj_types[j])
-            {
-            case CIRCLE:
-                (void)reinterpret_cast<Circle *>(elem->obj_list[j]);
-                break;
-            default:
-                std::cout << "Unknown object type " << elem->obj_types[j]
-                          << std::endl;
-            }
-        }
-    }
-}
-
 void render_place_element(Place *elem, int width, int height)
 {
     std::cout << "Placing " << elem->obj_count << " objects" << std::endl;
     int fps = 24;
     int frames = 1;
+    
+    auto framebuffer = std::make_unique<uint8_t[]>(width * height * 3);
 
-    auto pixel_list = std::make_unique<uint8_t[]>(width * height * frames * 3);
-
-    save_to_video_file(pixel_list.get(), "place.mp4", fps, width, height,
-                       frames);
+    for (int j = 0; j < elem->obj_count; j++)
+    {
+        switch (elem->obj_types[j])
+        {
+        case CIRCLE:
+            //draw_arc(reinterpret_cast<Circle *>(elem->obj_list[j]));
+            break;
+        default:
+            std::cout << "Unknown object type " << elem->obj_types[j]
+                        << std::endl;
+        }
+    }
 }
 
 void cast_then_render_element(SceneElement *elem, int width, int height)

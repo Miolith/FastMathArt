@@ -6,7 +6,8 @@ enum pixel_format
 {
     RGB_8 = 0,
     RGB_f32,
-    LinearRGB,
+    LinearRGB_8,
+    LinearRGB_f32,
     Oklab
 };
 
@@ -17,21 +18,11 @@ struct color_t : math::vec3<float>
 template <>
 struct color_t<Oklab> : math::vec3<float>
 {
-    union
-    {
-        float l;
-        float x;
-    };
-    union
-    {
-        float a;
-        float y;
-    };
-    union
-    {
-        float b;
-        float z;
-    };
+    // clang-format off
+    union { float l; float x; };
+    union { float a; float y; };
+    union { float b; float z; };
+    // clang-format on
 
     color_t(float l, float a, float b);
 };
@@ -39,46 +30,60 @@ struct color_t<Oklab> : math::vec3<float>
 template <>
 struct color_t<RGB_8> : math::vec3<uint8_t>
 {
-    union
-    {
-        uint8_t r;
-        uint8_t x;
-    };
-    union
-    {
-        uint8_t g;
-        uint8_t y;
-    };
-    union
-    {
-        uint8_t b;
-        uint8_t z;
-    };
+    // clang-format off
+    union { uint8_t r; uint8_t x; };
+    union { uint8_t g; uint8_t y; };
+    union { uint8_t b; uint8_t z; };
+    // clang-format on
 
     color_t(uint8_t r, uint8_t g, uint8_t b);
     color_t<Oklab> toOklab();
     color_t<RGB_f32> toRGB_f32();
+    color_t<LinearRGB_8> toLinearRGB_8();
+    color_t<LinearRGB_f32> toLinearRGB_f32();
 };
 
 template <>
 struct color_t<RGB_f32> : math::vec3<float>
 {
-    union
-    {
-        float r;
-        float x;
-    };
-    union
-    {
-        float g;
-        float y;
-    };
-    union
-    {
-        float b;
-        float z;
-    };
+    // clang-format off
+    union { float r; float x; };
+    union { float g; float y; };
+    union { float b; float z; };
+    // clang-format on
 
     color_t<Oklab> toOklab();
     color_t<RGB_8> toRGB_8();
+    color_t<LinearRGB_8> toLinearRGB_8();
+    color_t<LinearRGB_f32> toLinearRGB_f32();
+};
+
+template <>
+struct color_t<LinearRGB_8> : math::vec3<uint8_t>
+{
+    // clang-format off
+    union { uint8_t r; uint8_t x; };
+    union { uint8_t g; uint8_t y; };
+    union { uint8_t b; uint8_t z; };
+    // clang-format on
+
+    color_t<RGB_8> toRGB_8();
+    color_t<RGB_f32> toRGB_f32();
+    color_t<Oklab> toOklab();
+    color_t<LinearRGB_f32> toLinearRGB_f32();
+};
+
+template <>
+struct color_t<LinearRGB_f32> : math::vec3<float>
+{
+    // clang-format off
+    union { float r; float x; };
+    union { float g; float y; };
+    union { float b; float z; };
+    // clang-format on
+
+    color_t<RGB_8> toRGB_8();
+    color_t<RGB_f32> toRGB_f32();
+    color_t<Oklab> toOklab();
+    color_t<LinearRGB_8> toLinearRGB_8();
 };
