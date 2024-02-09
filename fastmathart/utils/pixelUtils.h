@@ -87,3 +87,26 @@ struct color_t<LinearRGB_f32> : math::vec3<float>
     color_t<Oklab> toOklab();
     color_t<LinearRGB_8> toLinearRGB_8();
 };
+
+struct pixel_buffer_t
+{
+    std::unique_ptr<uint8_t[]> buffer;
+    int width;
+    int height;
+
+    pixel_buffer_t(int width, int height);
+    pixel_buffer_t(pixel_buffer_t &&other);
+};
+
+struct video_buffer_t
+{
+    std::unique_ptr<uint8_t[]> buffer;
+    int width;
+    int height;
+    int frames;
+
+    video_buffer_t(int width, int height, int frames);
+    video_buffer_t(video_buffer_t &&other);
+    void set_frame(const pixel_buffer_t &framebuffer, int frame_index);
+    void set_all_frames(const pixel_buffer_t &framebuffer);
+};

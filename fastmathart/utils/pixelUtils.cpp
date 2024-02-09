@@ -1,6 +1,7 @@
 #include "pixelUtils.h"
 
 #include <cstdint>
+#include <cstring>
 
 /*
 ======================================
@@ -155,4 +156,47 @@ color_t<LinearRGB_f32> color_t<LinearRGB_8>::toLinearRGB_f32()
         this->g / 255.0f,
         this->b / 255.0f
     };
+}
+
+
+/*
+======================================
+Buffer utils
+======================================
+*/
+
+pixel_buffer_t::pixel_buffer_t(int width, int height)
+    : width(width), height(height)
+{
+    buffer = std::make_unique<uint8_t[]>(width * height * 3);
+}
+
+pixel_buffer_t::pixel_buffer_t(pixel_buffer_t &&other)
+    : buffer(std::move(other.buffer)), width(other.width), height(other.height)
+{}
+
+video_buffer_t::video_buffer_t(int width, int height, int frames)
+    : width(width), height(height), frames(frames)
+{
+    buffer = std::make_unique<uint8_t[]>(width * height * frames * 3);
+}
+
+video_buffer_t::video_buffer_t(video_buffer_t &&other)
+    : buffer(std::move(other.buffer)), width(other.width), height(other.height),
+      frames(other.frames)
+{}
+
+void video_buffer_t::set_all_frames(const pixel_buffer_t &framebuffer)
+{
+    for (int i = 0; i < frames; i++)
+    {
+        std::memcpy(buffer.get() + i * width * height * 3, framebuffer.buffer.get(),
+                    width * height * 3);
+    }
+}
+
+void video_buffer_t::set_frame(const pixel_buffer_t &framebuffer, int frame_index)
+{
+    std::memcpy(buffer.get() + frame_index * width * height * 3,
+                framebuffer.buffer.get(), width * height * 3);
 }

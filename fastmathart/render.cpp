@@ -1,5 +1,3 @@
-#include "render.h"
-
 #include <cstdio>
 #include <fstream>
 #include <iostream>
@@ -7,7 +5,10 @@
 #include <string>
 #include <string_view>
 
-void save_to_video_file(uint8_t video_buffer[], std::string_view filename,
+#include "utils/pixelUtils.h"
+#include "render.h"
+
+void save_to_video_file(video_buffer_t &video_buffer, std::string_view filename,
                         int fps, int width, int height, int frames)
 {
     std::cout << "Saving to video file " << filename << std::endl;
@@ -30,22 +31,24 @@ void save_to_video_file(uint8_t video_buffer[], std::string_view filename,
         std::cerr << "popen() failed!" << std::endl;
         return;
     }
-    fwrite(video_buffer, 1, width * height * frames * 3, pipe.get());
+    fwrite(video_buffer.buffer.get(), 1, width * height * frames * 3, pipe.get());
 }
 
-void render_wait_element(Wait *elem, int width, int height)
+void render_wait_element(Wait *elem, int width, int height, pixel_buffer_t &frame_cache)
 {
     std::cout << "Waiting for " << elem->seconds << " seconds" << std::endl;
     int fps = 24;
     int frames = elem->seconds * fps;
 
-    auto pixel_list = std::make_unique<uint8_t[]>(width * height * frames * 3);
+    video_buffer_t video_buffer(width, height, frames);
 
-    save_to_video_file(pixel_list.get(), "wait.mp4", fps, width, height,
+    video_buffer.set_all_frames(frame_cache);
+
+    save_to_video_file(video_buffer, "wait.mp4", fps, width, height,
                        frames);
 }
 
-void render_place_element(Place *elem, int width, int height)
+void render_place_element(Place *elem, int width, int height, pixel_buffer_t &frame_cache)
 {
     std::cout << "Placing " << elem->obj_count << " objects" << std::endl;
     int fps = 24;
@@ -67,7 +70,7 @@ void render_place_element(Place *elem, int width, int height)
     }
 }
 
-void cast_then_render_element(SceneElement *elem, int width, int height)
+void cast_then_render_element(SceneElement *elem, int width, int height, pixel_buffer_t &frame_cache)
 {
     if (elem->elem == nullptr)
     {
@@ -79,11 +82,11 @@ void cast_then_render_element(SceneElement *elem, int width, int height)
     {
     case WAIT:
         render_wait_element(reinterpret_cast<Wait *>(elem->elem), width,
-                            height);
+                            height, frame_cache);
         break;
     case PLACE:
         render_place_element(reinterpret_cast<Place *>(elem->elem), width,
-                             height);
+                             height, frame_cache);
         break;
     default:
         std::cout << "Unknown element type " << elem->type << std::endl;
@@ -95,9 +98,11 @@ void render_scene(SceneElement *elem, int width, int height,
 {
     std::cout << "Rendering scene to " << filename << std::endl;
 
+    pixel_buffer_t frame_cache(width, height);
+
     while (elem != nullptr)
     {
-        cast_then_render_element(elem, width, height);
+        cast_then_render_element(elem, width, height, frame_cache);
         elem = elem->next;
     }
 }
