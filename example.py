@@ -6,10 +6,12 @@ scene = SceneBuilder()
 
 circle = Circle(
     radius = 0.5,
-    thickness = 0.1,
-    color=RED,
-    fill=None,
-    position=CENTER
+    properties = Properties(
+        thickness = 0.1,
+        color=rgb(255, 0, 0),
+        fill=None,
+        position=CENTER
+    )
 )
 
 scene.append(

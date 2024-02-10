@@ -34,16 +34,27 @@ struct Place
     int obj_count;
 };
 
-struct Circle
+struct Color
 {
-    float radius;
+    void* value;
+    int type;
+};
+
+struct Properties
+{
     float x;
     float y;
     float r;
-    float g;
-    float b;
+    Color *color;
     float thickness;
-    float *fill;
+    Color *fill;
+    float opacity;
+};
+
+struct Circle
+{
+    float radius;
+    Properties* props;
 };
 
 void render_scene(SceneElement *elem, int width, int height,
