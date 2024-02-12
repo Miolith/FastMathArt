@@ -6,6 +6,8 @@
 #include <string_view>
 
 #include "utils/pixelUtils.h"
+#include "math/bezier.h"
+#include "math/vec.h"
 #include "render.h"
 
 void save_to_video_file(video_buffer_t &video_buffer, std::string_view filename,
@@ -48,6 +50,99 @@ void render_wait_element(Wait *elem, int width, int height, pixel_buffer_t &fram
                        frames);
 }
 
+math::fvec3 rotate(math::fvec3 point, float angle)
+{
+    float radians = angle * (M_PI / 180.0);
+    float x = point.x * cos(radians) - point.y * sin(radians);
+    float y = point.x * sin(radians) + point.y * cos(radians);
+    return math::fvec3(x, y, 0);
+}
+
+std::vector<math::CubicBezier> bezier_curve_approx(Circle &circle)
+{
+    constexpr float a = 1.00005519;
+    constexpr float b = 0.55342686;
+    constexpr float c = 0.99873585;
+
+    auto p1 = math::fvec3(0, a, 0) * circle.radius;
+    auto p2 = math::fvec3(b, c, 0) * circle.radius;
+    auto p3 = math::fvec3(c, b, 0) * circle.radius;
+    auto p4 = math::fvec3(a, 0, 0) * circle.radius;
+
+    std::vector<math::CubicBezier> path(4);
+    path[0] = math::CubicBezier(p1, p2, p3, p4);
+    path[1] = math::CubicBezier(rotate(p1, 90), rotate(p2, 90), rotate(p3, 90), rotate(p4, 90));
+    path[2] = math::CubicBezier(rotate(p1, 180), rotate(p2, 180), rotate(p3, 180), rotate(p4, 180));
+    path[3] = math::CubicBezier(rotate(p1, 270), rotate(p2, 270), rotate(p3, 270), rotate(p4, 270));
+
+    return path;
+}
+
+math::vec3<int> view_space_to_raster_space(math::fvec3 point, int width, int height)
+{
+    return math::vec3<int>(
+        (point.x + 1.0f) * width / 2.0f,
+        (point.y + 1.0f) * height / 2.0f,
+        0
+    );
+}
+
+void place_line(math::fvec3 point1, math::fvec3 point2, pixel_buffer_t &frame_cache, Properties &properties)
+{
+    std::cout << "Placing line" << std::endl;
+
+    math::vec3<int> p1 = view_space_to_raster_space(point1, frame_cache.width, frame_cache.height);
+    math::vec3<int> p2 = view_space_to_raster_space(point2, frame_cache.width, frame_cache.height);
+
+    int dx = std::abs(p2.x - p1.x);
+    int dy = std::abs(p2.y - p1.y);
+    int sx = (p1.x < p2.x) ? 1 : -1;
+    int sy = (p1.y < p2.y) ? 1 : -1;
+    int err = dx - dy;
+
+    while (true)
+    {
+        color_t<RGB_8> color = cast_to_color_t<RGB_8>(*properties.color);
+        frame_cache.set_pixel(p1.x, p1.y, color);
+        if (p1.x == p2.x && p1.y == p2.y)
+            break;
+        int e2 = 2 * err;
+        if (e2 > -dy)
+        {
+            err -= dy;
+            p1.x += sx;
+        }
+        if (e2 < dx)
+        {
+            err += dx;
+            p1.y += sy;
+        }
+    }
+}
+
+void place_cubic_bezier(math::CubicBezier &bezier, pixel_buffer_t &frame_cache, Properties props)
+{
+    std::cout << "Placing cubic bezier" << std::endl;
+
+    // Divide the cubic bezier into segments
+    // Draw each segment
+
+    for (float t = 0.01; t < 1.0; t += 0.01)
+    {
+        auto point1 = bezier.valueAt(t - 0.01);
+        auto point2 = bezier.valueAt(t);
+        
+        place_line(point1, point2, frame_cache, props);
+    }
+}
+
+void place_circle(Circle &circle, pixel_buffer_t &frame_cache)
+{
+    auto beziers = bezier_curve_approx(circle);
+    for(auto &bez : beziers)
+        place_cubic_bezier(bez, frame_cache, *circle.properties);
+}
+
 void render_place_element(Place *elem, int width, int height, pixel_buffer_t &frame_cache)
 {
     std::cout << "Placing " << elem->obj_count << " objects" << std::endl;
@@ -61,7 +156,7 @@ void render_place_element(Place *elem, int width, int height, pixel_buffer_t &fr
         switch (elem->obj_types[j])
         {
         case CIRCLE:
-            //draw_arc(reinterpret_cast<Circle *>(elem->obj_list[j]));
+            place_circle(*reinterpret_cast<Circle *>(elem->obj_list[j]), frame_cache);
             break;
         default:
             std::cout << "Unknown object type " << elem->obj_types[j]

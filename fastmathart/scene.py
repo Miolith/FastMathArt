@@ -11,9 +11,11 @@ class SceneElement(ctypes.Structure):
 class SceneBuilder:
     _head : SceneElement = None
     _tail : SceneElement = None
+    _list : list = []
 
     def append(self, *args):
         prev = None
+        self._list += args
         for arg in args:
             element = SceneElement()
             element.elem = ctypes.cast(ctypes.pointer(arg), ctypes.POINTER(ctypes.c_void_p))
@@ -33,3 +35,6 @@ class SceneBuilder:
     
     def get_scene(self):
         return self._head
+    
+    def __getitem__(self, index: int):
+        return self._list[index]

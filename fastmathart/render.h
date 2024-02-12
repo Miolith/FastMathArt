@@ -11,8 +11,9 @@ enum ElementType
 
 enum ShapeType
 {
-    CIRCLE = 0,
-    RECTANGLE = 1
+    UKNOWN = 0,
+    CIRCLE = 1,
+    RECTANGLE = 2
 };
 
 struct SceneElement
@@ -34,17 +35,26 @@ struct Place
     int obj_count;
 };
 
+enum ColorType
+{
+    NOTYPE = 0,
+    RGB_3_FLOATS = 1,
+    RGB_3_BYTES = 2,
+    HEX_STRING = 3,
+    HSL = 4
+};
+
 struct Color
 {
     void* value;
-    int type;
+    ColorType type;
 };
 
 struct Properties
 {
     float x;
     float y;
-    float r;
+    float z;
     Color *color;
     float thickness;
     Color *fill;
@@ -54,7 +64,7 @@ struct Properties
 struct Circle
 {
     float radius;
-    Properties* props;
+    Properties* properties;
 };
 
 void render_scene(SceneElement *elem, int width, int height,

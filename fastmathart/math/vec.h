@@ -32,36 +32,16 @@ namespace math
             , z(z)
         {}
 
-        vec3()
-            : x(0.0f)
-            , y(0.0f)
-            , z(0.0f)
-        {}
-
-        vec3(const vec3<Number> &other)
-            : x(other.x)
-            , y(other.y)
-            , z(other.z)
-        {}
-
-        vec3(const vec3<Number> &&other)
-            : x(other.x)
-            , y(other.y)
-            , z(other.z)
-        {}
-
-        vec3 &operator=(const vec3 &other)
-        {
-            this->x = other.x;
-            this->y = other.y;
-            this->z = other.z;
-            return *this;
-        }
-
         vec3(Number scalar)
             : x(scalar)
             , y(scalar)
             , z(scalar)
+        {}
+
+        vec3()
+            : x(0)
+            , y(0)
+            , z(0)
         {}
 
         vec3 operator+(vec3 other)
@@ -129,10 +109,9 @@ namespace math
             return vec3(this->x / length, this->y / length, this->z / length);
         }
 
-        std::ostream &operator<<(std::ostream &os)
+        friend std::ostream &operator<<(std::ostream &os, vec3<Number> &v)
         {
-            os << "vec3(" << this->x << ", " << this->y << ", " << this->z
-               << ")";
+            os << "vec3(" << v.x << ' ' << v.y << ' ' << v.z << ')';
             return os;
         }
 
@@ -142,68 +121,56 @@ namespace math
                         random_float(-1, 1))
                 .normalize();
         }
+
+        friend vec3<Number> operator+(const vec3<Number> &u, const vec3<Number> &v)
+        {
+            return vec3(u.x + v.x, u.y + v.y, u.z + v.z);
+        }
+
+        friend vec3<Number> operator-(const vec3<Number> &u, const vec3<Number> &v)
+        {
+            return vec3(u.x - v.x, u.y - v.y, u.z - v.z);
+        }
+
+        friend vec3<Number> operator*(const vec3<Number> &u, const vec3<Number> &v)
+        {
+            return vec3(u.x * v.x, u.y * v.y, u.z * v.z);
+        }
+
+        friend vec3<Number> operator*(Number t, const vec3<Number> &v)
+        {
+            return vec3(t * v.x, t * v.y, t * v.z);
+        }
+
+        friend vec3<Number> operator/(vec3<Number> v, Number t)
+        {
+            return (1 / t) * v;
+        }
+
+        friend vec3<Number> operator+(vec3<Number> v, Number t)
+        {
+            return vec3(v.x + t, v.y + t, v.z + t);
+        }
+
+        friend vec3<Number> operator-(const vec3<Number> &v)
+        {
+            return vec3(-v.x, -v.y, -v.z);
+        }
+
+        friend Number dot(const vec3<Number> &u, const vec3<Number> &v)
+        {
+            return u.x * v.x + u.y * v.y + u.z * v.z;
+        }
+
+        friend vec3<Number> cross(const vec3<Number> &u, const vec3<Number> &v)
+        {
+            return vec3(u.y * v.z - u.z * v.y, u.z * v.x - u.x * v.z,
+                        u.x * v.y - u.y * v.x);
+        }
     };
 
-    template <typename Number>
-    inline std::ostream &operator<<(std::ostream &os, vec3<Number> &v)
-    {
-        os << "vec3(" << v.x << ' ' << v.y << ' ' << v.z << ')';
-        return os;
-    }
+    using fvec3 = vec3<float>;
 
-    template <typename Number>
-    inline vec3<Number> operator+(const vec3<Number> &u, const vec3<Number> &v)
-    {
-        return vec3(u.x + v.x, u.y + v.y, u.z + v.z);
-    }
 
-    template <typename Number>
-    inline vec3<Number> operator-(const vec3<Number> &u, const vec3<Number> &v)
-    {
-        return vec3(u.x - v.x, u.y - v.y, u.z - v.z);
-    }
-
-    template <typename Number>
-    inline vec3<Number> operator*(const vec3<Number> &u, const vec3<Number> &v)
-    {
-        return vec3(u.x * v.x, u.y * v.y, u.z * v.z);
-    }
-
-    template <typename Number>
-    inline vec3<Number> operator*(Number t, const vec3<Number> &v)
-    {
-        return vec3(t * v.x, t * v.y, t * v.z);
-    }
-
-    template <typename Number>
-    inline vec3<Number> operator/(vec3<Number> v, Number t)
-    {
-        return (1 / t) * v;
-    }
-
-    template <typename Number>
-    inline vec3<Number> operator+(vec3<Number> v, Number t)
-    {
-        return vec3(v.x + t, v.y + t, v.z + t);
-    }
-
-    template <typename Number>
-    inline vec3<Number> operator-(const vec3<Number> &v)
-    {
-        return vec3(-v.x, -v.y, -v.z);
-    }
-
-    template <typename Number>
-    inline Number dot(const vec3<Number> &u, const vec3<Number> &v)
-    {
-        return u.x * v.x + u.y * v.y + u.z * v.z;
-    }
-
-    template <typename Number>
-    inline vec3<Number> cross(const vec3<Number> &u, const vec3<Number> &v)
-    {
-        return vec3(u.y * v.z - u.z * v.y, u.z * v.x - u.x * v.z,
-                    u.x * v.y - u.y * v.x);
-    }
 
 } // namespace math

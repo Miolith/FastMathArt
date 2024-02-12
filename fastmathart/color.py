@@ -1,4 +1,4 @@
-from ctypes import Structure, POINTER, c_void_p, c_int, c_float, cast, pointer
+from ctypes import Structure, POINTER, c_void_p, c_uint8, c_float, cast, pointer, c_int
 from typing import Iterable
 
 NOTYPE = 0
@@ -29,7 +29,7 @@ class Color(Structure):
             self.value = cast(pointer((c_float * 3)(r, g, b)), POINTER(c_void_p))
 
         elif type == RGB_3_BYTES:
-            self.value = cast(pointer((c_int * 3)(r, g, b)), POINTER(c_void_p))
+            self.value = cast(pointer((c_uint8 * 3)(r, g, b)), POINTER(c_void_p))
 
         elif type == HEX_STRING:
             self.value = cast(pointer(c_void_p(hex)), POINTER(c_void_p))

@@ -1,6 +1,7 @@
 #include <cstdint>
 
 #include "../math/vec.h"
+#include "../render.h"
 
 enum pixel_format
 {
@@ -52,6 +53,7 @@ struct color_t<RGB_f32> : math::vec3<float>
     union { float b; float z; };
     // clang-format on
 
+    color_t(float r, float g, float b);
     color_t<Oklab> toOklab();
     color_t<RGB_8> toRGB_8();
     color_t<LinearRGB_8> toLinearRGB_8();
@@ -88,6 +90,12 @@ struct color_t<LinearRGB_f32> : math::vec3<float>
     color_t<LinearRGB_8> toLinearRGB_8();
 };
 
+template<pixel_format P>
+color_t<P> cast_to_color_t(Color &color);
+
+template<>
+color_t<RGB_f32> cast_to_color_t<RGB_f32>(Color &color);
+
 struct pixel_buffer_t
 {
     std::unique_ptr<uint8_t[]> buffer;
@@ -96,6 +104,7 @@ struct pixel_buffer_t
 
     pixel_buffer_t(int width, int height);
     pixel_buffer_t(pixel_buffer_t &&other);
+    void set_pixel(int x, int y, const color_t<RGB_8> &color);
 };
 
 struct video_buffer_t

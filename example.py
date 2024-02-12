@@ -8,7 +8,7 @@ circle = Circle(
     radius = 0.5,
     properties = Properties(
         thickness = 0.1,
-        color=rgb(255, 0, 0),
+        color=rgb(0.3, 0.6, 0.8),
         fill=None,
         position=CENTER
     )

@@ -20,9 +20,13 @@ RGB 8 bits unsigned int per channel, member functions
 ======================================
 */
 
-color_t<RGB_8>::color_t(uint8_t r, uint8_t g, uint8_t b)
-    : vec3<uint8_t>(r, g, b)
-{}
+color_t<RGB_8>::color_t(uint8_t _r, uint8_t _g, uint8_t _b)
+    : vec3<uint8_t>(_r, _g, _b)
+{
+    x = _r;
+    y = _g;
+    z = _b;
+}
 
 color_t<Oklab> color_t<RGB_8>::toOklab()
 {
@@ -69,6 +73,13 @@ RGB 32bits float per channel, member functions
 ======================================
 */
 
+color_t<RGB_f32>::color_t(float _r, float _g, float _b)
+    : vec3<float>(_r, _g, _b)
+{
+    x = _r;
+    y = _g;
+    z = _b;
+}
 
 color_t<RGB_8> color_t<RGB_f32>::toRGB_8()
 {
@@ -161,6 +172,37 @@ color_t<LinearRGB_f32> color_t<LinearRGB_8>::toLinearRGB_f32()
 
 /*
 ======================================
+Casting python color messages to C++ color_t
+======================================
+*/
+template<>
+color_t<RGB_8> cast_to_color_t<RGB_8>(Color &color)
+{
+    return cast_to_color_t<RGB_f32>(color).toRGB_8();
+}
+
+template<>
+color_t<RGB_f32> cast_to_color_t<RGB_f32>(Color &color)
+{
+    switch (color.type)
+    {
+        case RGB_3_BYTES: {
+            uint8_t* value = reinterpret_cast<uint8_t*>(color.value);
+            return color_t<RGB_8>(value[0], value[1], value[2]).toRGB_f32();
+            break;
+        }
+        case RGB_3_FLOATS: {
+            float* value = reinterpret_cast<float*>(color.value);
+            return color_t<RGB_f32>(value[0], value[1], value[2]);
+            break;
+        }
+        default:
+            throw std::runtime_error("Invalid color type " + std::to_string(color.type));
+    }
+}
+
+/*
+======================================
 Buffer utils
 ======================================
 */
@@ -174,6 +216,16 @@ pixel_buffer_t::pixel_buffer_t(int width, int height)
 pixel_buffer_t::pixel_buffer_t(pixel_buffer_t &&other)
     : buffer(std::move(other.buffer)), width(other.width), height(other.height)
 {}
+
+void pixel_buffer_t::set_pixel(int x, int y, const color_t<RGB_8> &color)
+{
+    int index = (y * width + x) * 3;
+    buffer[index] = color.x;
+    buffer[index + 1] = color.y;
+    buffer[index + 2] = color.z;
+
+    std::cout << "Set pixel at " << x << ", " << y << " to " << (int)color.r << ", " << (int)color.g << ", " << (int)color.b << std::endl;
+}
 
 video_buffer_t::video_buffer_t(int width, int height, int frames)
     : width(width), height(height), frames(frames)

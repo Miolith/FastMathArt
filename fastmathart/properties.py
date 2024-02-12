@@ -30,8 +30,12 @@ class Properties(Structure):
         self.y = position[1]
         self.z = position[2]
 
-        self.color = pointer(color)
+        if color is not None:
+            self.color = pointer(color)
+
         self.thickness = thickness
+        
         if fill is not None:
             self.fill = pointer(fill)
+        
         self.opacity = opacity
