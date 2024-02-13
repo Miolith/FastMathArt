@@ -115,11 +115,7 @@ void place_line(math::fvec3 point1, math::fvec3 point2,
         ? cast_to_color_t<RGB_8>(*properties.color)
         : color_t<RGB_8>(255, 255, 255);
     
-    std::cout << "float thickness: " << properties.thickness << std::endl;
-
     int thickness = view_space_to_raster_space(properties.thickness, frame_cache.width, frame_cache.height);
-
-    std::cout << "Thickness: " << thickness << std::endl;
 
     while (true)
     {
@@ -194,6 +190,70 @@ void render_place_element(Place *elem, int width, int height,
     }
 }
 
+
+void draw_path(std::vector<math::CubicBezier> &beziers,
+               pixel_buffer_t &frame_cache, Properties &props, int frames)
+{
+    std::cout << "Drawing path" << std::endl;
+    
+    auto video = video_buffer_t(frame_cache.width, frame_cache.height, frames);
+
+    int current_frame = 0;
+    int bezier_amount = beziers.size();
+    math::fvec3 point1 = beziers[0].valueAt(0);
+    
+    float draw_per_frame = float(bezier_amount) / float(frames);
+    float u = 0.0;
+    
+    for (auto &bezier : beziers)
+    {
+        for (float t = 0.01; t <= 1.0; t += 0.01, u += 0.01)
+        {
+            math::fvec3 point2 = bezier.valueAt(t);
+            place_line(point1, point2, frame_cache, props);
+            point1 = point2;
+            if (u >= draw_per_frame)
+            {
+                std::cout << "Frame " << current_frame << std::endl;
+                video.set_frame(frame_cache, current_frame);
+                current_frame++;
+                u = 0.0;
+            }
+        }
+    }
+
+    video.set_frame(frame_cache, current_frame);
+
+    save_to_video_file(video, "draw.mp4", 24, frame_cache.width,
+                       frame_cache.height, frames);
+}
+
+void draw_circle(Circle &circle, pixel_buffer_t &frame_cache)
+{
+    auto beziers = bezier_curve_approx(circle);
+    draw_path(beziers, frame_cache, *circle.properties, 24);
+}
+
+void render_draw_element(Draw *elem, int width, int height,
+                         pixel_buffer_t &frame_cache)
+{
+    std::cout << "Drawing " << elem->obj_count << " objects" << std::endl;
+
+    for (int j = 0; j < elem->obj_count; j++)
+    {
+        switch (elem->obj_types[j])
+        {
+        case CIRCLE:
+            draw_circle(*reinterpret_cast<Circle *>(elem->obj_list[j]),
+                         frame_cache);
+            break;
+        default:
+            std::cout << "Unknown object type " << elem->obj_types[j]
+                      << std::endl;
+        }
+    }
+}
+
 void cast_then_render_element(SceneElement *elem, int width, int height,
                               pixel_buffer_t &frame_cache)
 {
@@ -212,6 +272,10 @@ void cast_then_render_element(SceneElement *elem, int width, int height,
     case PLACE:
         render_place_element(reinterpret_cast<Place *>(elem->elem), width,
                              height, frame_cache);
+        break;
+    case DRAW:
+        render_draw_element(reinterpret_cast<Draw *>(elem->elem), width, height,
+                            frame_cache);
         break;
     default:
         std::cout << "Unknown element type " << elem->type << std::endl;

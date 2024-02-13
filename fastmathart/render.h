@@ -6,7 +6,8 @@ enum ElementType
 {
     NOTHING = 0,
     WAIT = 1,
-    PLACE = 2
+    PLACE = 2,
+    DRAW = 3
 };
 
 enum ShapeType
@@ -65,6 +66,14 @@ struct Circle
 {
     float radius;
     Properties *properties;
+};
+
+struct Draw
+{
+    void **obj_list;
+    ShapeType *obj_types;
+    int obj_count;
+    float seconds;
 };
 
 void render_scene(SceneElement *elem, int width, int height,

@@ -15,7 +15,7 @@ circle = Circle(
 )
 
 scene.append(
-    Place(circle),
+    Draw(circle),
     Wait(seconds=4.0)
 )
 

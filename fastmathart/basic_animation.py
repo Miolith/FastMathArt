@@ -36,3 +36,19 @@ class Wait(Structure):
     def __init__(self, seconds: float = 1.0):
         self.seconds = seconds
         
+class Draw(Structure):
+    _fields_ = [
+        ("obj_list", POINTER(POINTER(c_void_p))),
+        ("obj_types", POINTER(c_int)),
+        ("obj_count", c_int),
+        ("seconds", c_float)
+    ]
+
+    def __init__(self, *args, seconds: float = 1.0):
+        # Convert all args to void pointers
+        args = [cast(pointer(arg), POINTER(c_void_p)) for arg in args]
+
+        self.obj_list = (POINTER(c_void_p) * len(args))(*args)
+        self.obj_types = (c_int * len(args))(*[1 for _ in range(len(args))])
+        self.obj_count = len(args)
+        self.seconds = seconds

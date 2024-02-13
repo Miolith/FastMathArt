@@ -249,6 +249,9 @@ void video_buffer_t::set_all_frames(const pixel_buffer_t &framebuffer)
 void video_buffer_t::set_frame(const pixel_buffer_t &framebuffer,
                                int frame_index)
 {
+    if (frame_index < 0 || frame_index >= frames)
+        return;
+
     std::memcpy(buffer.get() + frame_index * width * height * 3,
                 framebuffer.buffer.get(), width * height * 3);
 }
