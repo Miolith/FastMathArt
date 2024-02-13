@@ -46,7 +46,7 @@ enum ColorType
 
 struct Color
 {
-    void* value;
+    void *value;
     ColorType type;
 };
 
@@ -64,7 +64,7 @@ struct Properties
 struct Circle
 {
     float radius;
-    Properties* properties;
+    Properties *properties;
 };
 
 void render_scene(SceneElement *elem, int width, int height,

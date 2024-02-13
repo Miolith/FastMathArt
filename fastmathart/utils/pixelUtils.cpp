@@ -13,7 +13,6 @@ color_t<Oklab>::color_t(float l, float a, float b)
     : vec3<float>(l, a, b)
 {}
 
-
 /*
 ======================================
 RGB 8 bits unsigned int per channel, member functions
@@ -65,7 +64,6 @@ color_t<LinearRGB_8> color_t<RGB_8>::toLinearRGB_8()
         static_cast<uint8_t>(std::pow(this->b / 255.0f, gamma) * 255.0f)
     };
 }
-
 
 /*
 ======================================
@@ -121,11 +119,9 @@ color_t<LinearRGB_8> color_t<RGB_f32>::toLinearRGB_8()
 color_t<LinearRGB_f32> color_t<RGB_f32>::toLinearRGB_f32()
 {
     static constexpr float gamma = 2.2f;
-    return color_t<LinearRGB_f32>{
-        std::pow(this->r, gamma),
-        std::pow(this->g, gamma),
-        std::pow(this->b, gamma)
-    };
+    return color_t<LinearRGB_f32>{ std::pow(this->r, gamma),
+                                   std::pow(this->g, gamma),
+                                   std::pow(this->b, gamma) };
 }
 
 /*
@@ -153,51 +149,46 @@ color_t<Oklab> color_t<LinearRGB_8>::toOklab()
 color_t<RGB_f32> color_t<LinearRGB_8>::toRGB_f32()
 {
     static constexpr float gamma = 2.2f;
-    return color_t<RGB_f32>{
-        std::pow(this->r / 255.0f, 1.0f / gamma),
-        std::pow(this->g / 255.0f, 1.0f / gamma),
-        std::pow(this->b / 255.0f, 1.0f / gamma)
-    };
+    return color_t<RGB_f32>{ std::pow(this->r / 255.0f, 1.0f / gamma),
+                             std::pow(this->g / 255.0f, 1.0f / gamma),
+                             std::pow(this->b / 255.0f, 1.0f / gamma) };
 }
 
 color_t<LinearRGB_f32> color_t<LinearRGB_8>::toLinearRGB_f32()
 {
-    return color_t<LinearRGB_f32>{
-        this->r / 255.0f,
-        this->g / 255.0f,
-        this->b / 255.0f
-    };
+    return color_t<LinearRGB_f32>{ this->r / 255.0f, this->g / 255.0f,
+                                   this->b / 255.0f };
 }
-
 
 /*
 ======================================
 Casting python color messages to C++ color_t
 ======================================
 */
-template<>
+template <>
 color_t<RGB_8> cast_to_color_t<RGB_8>(Color &color)
 {
     return cast_to_color_t<RGB_f32>(color).toRGB_8();
 }
 
-template<>
+template <>
 color_t<RGB_f32> cast_to_color_t<RGB_f32>(Color &color)
 {
     switch (color.type)
     {
-        case RGB_3_BYTES: {
-            uint8_t* value = reinterpret_cast<uint8_t*>(color.value);
-            return color_t<RGB_8>(value[0], value[1], value[2]).toRGB_f32();
-            break;
-        }
-        case RGB_3_FLOATS: {
-            float* value = reinterpret_cast<float*>(color.value);
-            return color_t<RGB_f32>(value[0], value[1], value[2]);
-            break;
-        }
-        default:
-            throw std::runtime_error("Invalid color type " + std::to_string(color.type));
+    case RGB_3_BYTES: {
+        uint8_t *value = reinterpret_cast<uint8_t *>(color.value);
+        return color_t<RGB_8>(value[0], value[1], value[2]).toRGB_f32();
+        break;
+    }
+    case RGB_3_FLOATS: {
+        float *value = reinterpret_cast<float *>(color.value);
+        return color_t<RGB_f32>(value[0], value[1], value[2]);
+        break;
+    }
+    default:
+        throw std::runtime_error("Invalid color type "
+                                 + std::to_string(color.type));
     }
 }
 
@@ -208,46 +199,55 @@ Buffer utils
 */
 
 pixel_buffer_t::pixel_buffer_t(int width, int height)
-    : width(width), height(height)
+    : width(width)
+    , height(height)
 {
     buffer = std::make_unique<uint8_t[]>(width * height * 3);
 }
 
 pixel_buffer_t::pixel_buffer_t(pixel_buffer_t &&other)
-    : buffer(std::move(other.buffer)), width(other.width), height(other.height)
+    : buffer(std::move(other.buffer))
+    , width(other.width)
+    , height(other.height)
 {}
 
 void pixel_buffer_t::set_pixel(int x, int y, const color_t<RGB_8> &color)
 {
+    if (x < 0 || x >= width || y < 0 || y >= height)
+        return;
+
     int index = (y * width + x) * 3;
     buffer[index] = color.x;
     buffer[index + 1] = color.y;
     buffer[index + 2] = color.z;
-
-    std::cout << "Set pixel at " << x << ", " << y << " to " << (int)color.r << ", " << (int)color.g << ", " << (int)color.b << std::endl;
 }
 
 video_buffer_t::video_buffer_t(int width, int height, int frames)
-    : width(width), height(height), frames(frames)
+    : width(width)
+    , height(height)
+    , frames(frames)
 {
     buffer = std::make_unique<uint8_t[]>(width * height * frames * 3);
 }
 
 video_buffer_t::video_buffer_t(video_buffer_t &&other)
-    : buffer(std::move(other.buffer)), width(other.width), height(other.height),
-      frames(other.frames)
+    : buffer(std::move(other.buffer))
+    , width(other.width)
+    , height(other.height)
+    , frames(other.frames)
 {}
 
 void video_buffer_t::set_all_frames(const pixel_buffer_t &framebuffer)
 {
     for (int i = 0; i < frames; i++)
     {
-        std::memcpy(buffer.get() + i * width * height * 3, framebuffer.buffer.get(),
-                    width * height * 3);
+        std::memcpy(buffer.get() + i * width * height * 3,
+                    framebuffer.buffer.get(), width * height * 3);
     }
 }
 
-void video_buffer_t::set_frame(const pixel_buffer_t &framebuffer, int frame_index)
+void video_buffer_t::set_frame(const pixel_buffer_t &framebuffer,
+                               int frame_index)
 {
     std::memcpy(buffer.get() + frame_index * width * height * 3,
                 framebuffer.buffer.get(), width * height * 3);

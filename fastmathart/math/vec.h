@@ -122,17 +122,20 @@ namespace math
                 .normalize();
         }
 
-        friend vec3<Number> operator+(const vec3<Number> &u, const vec3<Number> &v)
+        friend vec3<Number> operator+(const vec3<Number> &u,
+                                      const vec3<Number> &v)
         {
             return vec3(u.x + v.x, u.y + v.y, u.z + v.z);
         }
 
-        friend vec3<Number> operator-(const vec3<Number> &u, const vec3<Number> &v)
+        friend vec3<Number> operator-(const vec3<Number> &u,
+                                      const vec3<Number> &v)
         {
             return vec3(u.x - v.x, u.y - v.y, u.z - v.z);
         }
 
-        friend vec3<Number> operator*(const vec3<Number> &u, const vec3<Number> &v)
+        friend vec3<Number> operator*(const vec3<Number> &u,
+                                      const vec3<Number> &v)
         {
             return vec3(u.x * v.x, u.y * v.y, u.z * v.z);
         }
@@ -170,7 +173,5 @@ namespace math
     };
 
     using fvec3 = vec3<float>;
-
-
 
 } // namespace math
