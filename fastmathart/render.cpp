@@ -38,18 +38,17 @@ void save_to_video_file(video_buffer_t &video_buffer, std::string_view filename,
            pipe.get());
 }
 
-void render_wait_element(PyAPI::Wait *elem, int width, int height,
+void render_wait_element(PyAPI::Wait *elem, PyAPI::Config &config,
                          pixel_buffer_t &frame_cache)
 {
     std::cout << "Waiting for " << elem->seconds << " seconds" << std::endl;
-    int fps = 24;
-    int frames = elem->seconds * fps;
+    int frames = elem->seconds * config.fps;
 
-    video_buffer_t video_buffer(width, height, frames);
+    video_buffer_t video_buffer(config.width, config.height, frames);
 
     video_buffer.set_all_frames(frame_cache);
 
-    save_to_video_file(video_buffer, "wait.mp4", fps, width, height, frames);
+    save_to_video_file(video_buffer, "wait.mp4", config.fps, config.width, config.height, frames);
 }
 
 math::fvec3 rotate(math::fvec3 point, float angle)
@@ -96,6 +95,22 @@ int view_space_to_raster_space(float quantity, int width, int height)
     return (quantity)*std::min(height, width);
 }
 
+void render_disk(math::vec3<int> center, int radius, pixel_buffer_t &frame_cache,
+                    color_t<RGB_8> color)
+{
+    for (int x = -radius; x < radius; x++)
+    {
+        for (int y = -radius; y < radius; y++)
+        {
+            if (x * x + y * y < radius * radius)
+            {
+                frame_cache.set_pixel(center.x + x, center.y + y, color);
+            }
+        }
+    }
+}
+
+
 void render_line(math::fvec3 point1, math::fvec3 point2,
                  pixel_buffer_t &frame_cache, PyAPI::Properties &properties)
 {
@@ -121,14 +136,7 @@ void render_line(math::fvec3 point1, math::fvec3 point2,
 
     while (true)
     {
-        frame_cache.set_pixel(p1.x, p1.y, color);
-        for (int i = 0; i < thickness / 2; i++)
-        {
-            frame_cache.set_pixel(p1.x + i, p1.y, color);
-            frame_cache.set_pixel(p1.x - i, p1.y, color);
-            frame_cache.set_pixel(p1.x, p1.y + i, color);
-            frame_cache.set_pixel(p1.x, p1.y - i, color);
-        }
+        render_disk(p1, thickness / 2, frame_cache, color);
         if (p1.x == p2.x && p1.y == p2.y)
             break;
         int e2 = 2 * err;
@@ -172,7 +180,7 @@ void place_circle(PyAPI::Circle &circle, pixel_buffer_t &frame_cache)
         place_cubic_bezier(bez, frame_cache, *circle.properties);
 }
 
-void render_place_element(PyAPI::Place *elem, int width, int height,
+void render_place_element(PyAPI::Place *elem, PyAPI::Config &config,
                           pixel_buffer_t &frame_cache)
 {
     std::cout << "Placing " << elem->obj_count << " objects" << std::endl;
@@ -193,18 +201,19 @@ void render_place_element(PyAPI::Place *elem, int width, int height,
 }
 
 void draw_path(std::vector<math::CubicBezier> &beziers,
-               pixel_buffer_t &frame_cache, PyAPI::Properties &props,
-               int frames)
+               pixel_buffer_t &frame_cache, video_buffer_t &video,
+                PyAPI::Properties &props)
 {
     std::cout << "Drawing path" << std::endl;
 
-    auto video = video_buffer_t(frame_cache.width, frame_cache.height, frames);
-
+    int frames = video.frames;
     int current_frame = 0;
     int bezier_amount = beziers.size();
     math::fvec3 point1 = beziers[0].valueAt(0);
 
     float draw_per_frame = float(bezier_amount) / float(frames);
+    std::cout << "Draw per frame: " << draw_per_frame << std::endl;
+    std::cout << "Frames: " << frames << std::endl;
     float u = 0.01;
 
     for (auto &bezier : beziers)
@@ -225,22 +234,27 @@ void draw_path(std::vector<math::CubicBezier> &beziers,
     }
 
     // Save the last frame
-    video.set_frame(frame_cache, current_frame);
-
-    save_to_video_file(video, "draw.mp4", 24, frame_cache.width,
-                       frame_cache.height, frames);
+    video.set_frame(frame_cache, frames - 1);
 }
 
-void draw_circle(PyAPI::Circle &circle, pixel_buffer_t &frame_cache)
+
+void draw_circle(PyAPI::Circle &circle, pixel_buffer_t &frame_cache, video_buffer_t &video)
 {
     auto beziers = bezier_curve_approx(circle);
-    draw_path(beziers, frame_cache, *circle.properties, 24);
+    draw_path(beziers, frame_cache, video, *circle.properties);
 }
 
-void render_draw_element(PyAPI::Draw *elem, int width, int height,
+
+void render_draw_element(PyAPI::Draw *elem, PyAPI::Config &config,
                          pixel_buffer_t &frame_cache)
 {
     std::cout << "Drawing " << elem->obj_count << " objects" << std::endl;
+
+    int frames = elem->seconds * config.fps;
+    std::cout << "Frames: " << frames << std::endl;
+    std::cout << "Seconds: " << elem->seconds << std::endl;
+    
+    auto video = video_buffer_t(frame_cache.width, frame_cache.height, frames);
 
     for (int j = 0; j < elem->obj_count; j++)
     {
@@ -248,16 +262,18 @@ void render_draw_element(PyAPI::Draw *elem, int width, int height,
         {
         case PyAPI::CIRCLE:
             draw_circle(*reinterpret_cast<PyAPI::Circle *>(elem->obj_list[j]),
-                        frame_cache);
+                        frame_cache, video);
             break;
         default:
             std::cout << "Unknown object type " << elem->obj_types[j]
                       << std::endl;
         }
     }
+
+    save_to_video_file(video, "draw.mp4", config.fps, config.width, config.height, frames);
 }
 
-void cast_then_render_element(PyAPI::SceneElement *elem, int width, int height,
+void cast_then_render_element(PyAPI::SceneElement *elem, PyAPI::Config &config,
                               pixel_buffer_t &frame_cache)
 {
     if (elem->elem == nullptr)
@@ -269,32 +285,30 @@ void cast_then_render_element(PyAPI::SceneElement *elem, int width, int height,
     switch (elem->type)
     {
     case PyAPI::WAIT:
-        render_wait_element(reinterpret_cast<PyAPI::Wait *>(elem->elem), width,
-                            height, frame_cache);
+        render_wait_element(reinterpret_cast<PyAPI::Wait *>(elem->elem), config, frame_cache);
         break;
     case PyAPI::PLACE:
         render_place_element(reinterpret_cast<PyAPI::Place *>(elem->elem),
-                             width, height, frame_cache);
+                             config, frame_cache);
         break;
     case PyAPI::DRAW:
-        render_draw_element(reinterpret_cast<PyAPI::Draw *>(elem->elem), width,
-                            height, frame_cache);
+        render_draw_element(reinterpret_cast<PyAPI::Draw *>(elem->elem), config, frame_cache);
         break;
     default:
         std::cout << "Unknown element type " << elem->type << std::endl;
     }
 }
 
-void render_scene(PyAPI::SceneElement *elem, int width, int height,
+void render_scene(PyAPI::SceneElement *elem, PyAPI::Config &config,
                   std::string_view filename)
 {
     std::cout << "Rendering scene to " << filename << std::endl;
 
-    pixel_buffer_t frame_cache(width, height);
+    pixel_buffer_t frame_cache(config.width, config.height);
 
     while (elem != nullptr)
     {
-        cast_then_render_element(elem, width, height, frame_cache);
+        cast_then_render_element(elem, config, frame_cache);
         elem = elem->next;
     }
 }

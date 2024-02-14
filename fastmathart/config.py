@@ -1,3 +1,17 @@
+from ctypes import Structure, c_int
+class ConfigBinding(Structure):
+    _fields_ = [
+        ('width', c_int),
+        ('height', c_int),
+        ('frames_per_second', c_int),
+    ]
+
+    def __init__(self):
+        self.width = config.width
+        self.height = config.height
+        self.frames_per_second = config.frames_per_second
+
+
 class config:
     width = 1920
     height = 1080

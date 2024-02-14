@@ -4,6 +4,13 @@
 
 namespace PyAPI
 {
+    struct Config
+    {
+        int width;
+        int height;
+        int fps;
+    };
+
     enum ElementType
     {
         NOTHING = 0,
@@ -79,5 +86,5 @@ namespace PyAPI
     };
 } // namespace PyAPI
 
-void render_scene(PyAPI::SceneElement *elem, int width, int height,
+void render_scene(PyAPI::SceneElement *elem, PyAPI::Config &config,
                   std::string_view filename);
