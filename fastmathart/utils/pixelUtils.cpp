@@ -166,22 +166,22 @@ Casting python color messages to C++ color_t
 ======================================
 */
 template <>
-color_t<RGB_8> cast_to_color_t<RGB_8>(Color &color)
+color_t<RGB_8> cast_to_color_t<RGB_8>(PyAPI::Color &color)
 {
     return cast_to_color_t<RGB_f32>(color).toRGB_8();
 }
 
 template <>
-color_t<RGB_f32> cast_to_color_t<RGB_f32>(Color &color)
+color_t<RGB_f32> cast_to_color_t<RGB_f32>(PyAPI::Color &color)
 {
     switch (color.type)
     {
-    case RGB_3_BYTES: {
+    case PyAPI::RGB_3_BYTES: {
         uint8_t *value = reinterpret_cast<uint8_t *>(color.value);
         return color_t<RGB_8>(value[0], value[1], value[2]).toRGB_f32();
         break;
     }
-    case RGB_3_FLOATS: {
+    case PyAPI::RGB_3_FLOATS: {
         float *value = reinterpret_cast<float *>(color.value);
         return color_t<RGB_f32>(value[0], value[1], value[2]);
         break;

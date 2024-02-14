@@ -91,10 +91,10 @@ struct color_t<LinearRGB_f32> : math::vec3<float>
 };
 
 template <pixel_format P>
-color_t<P> cast_to_color_t(Color &color);
+color_t<P> cast_to_color_t(PyAPI::Color &color);
 
 template <>
-color_t<RGB_f32> cast_to_color_t<RGB_f32>(Color &color);
+color_t<RGB_f32> cast_to_color_t<RGB_f32>(PyAPI::Color &color);
 
 struct pixel_buffer_t
 {
