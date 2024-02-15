@@ -1,6 +1,6 @@
 from fastmathart import *
 
-config.load_preset(presets.HD720p_30fps)
+config.load_preset(presets.HD1080p_60fps)
 
 scene = SceneBuilder()
 

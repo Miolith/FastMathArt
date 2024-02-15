@@ -200,6 +200,11 @@ void render_place_element(PyAPI::Place *elem, PyAPI::Config &config,
     }
 }
 
+float smoothstep(float x)
+{
+    return x * x * (3 - 2 * x);
+}
+
 void draw_path(std::vector<math::CubicBezier> &beziers,
                pixel_buffer_t &frame_cache, video_buffer_t &video,
                 PyAPI::Properties &props)
@@ -212,24 +217,33 @@ void draw_path(std::vector<math::CubicBezier> &beziers,
     math::fvec3 point1 = beziers[0].valueAt(0);
 
     int steps_per_bezier = 100;
-    int u = 0;
-    int draw_per_frame = steps_per_bezier * bezier_amount / frames;
+    float u = 0.0f;
+    int total_steps = steps_per_bezier * bezier_amount;
+    float draw_per_frame = 1.0 / frames;
+
+    float u_step = 1.0f / float(total_steps);
 
     for (auto &bezier : beziers)
     {
-        for (int i = 1; i <= steps_per_bezier; i++, u++)
+        for (int i = 1; i <= steps_per_bezier; i++, u += u_step)
         {
             float t = float(i) / float(steps_per_bezier);
             math::fvec3 point2 = bezier.valueAt(t);
             render_line(point1, point2, frame_cache, props);
             point1 = point2;
 
-            if (u >= draw_per_frame)
+            float f_u = smoothstep(u);
+            std::cout << "f_u: " << f_u << std::endl;
+            std::cout << "u: " << u << std::endl;
+
+            auto test = std::abs(f_u - draw_per_frame * (current_frame+1.0f));
+            std::cout << "test: " << test << std::endl;
+            std::cout << "current_frame: " << draw_per_frame *(current_frame + 1.0f) << std::endl;
+            if (f_u > 0.000001f && f_u - draw_per_frame * (current_frame+1.0f) >= -0.000001f)
             {
                 std::cout << "Frame " << current_frame << std::endl;
                 video.set_frame(frame_cache, current_frame);
                 current_frame++;
-                u = 0;
             }
         }
     }
