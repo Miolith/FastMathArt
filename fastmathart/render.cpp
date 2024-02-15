@@ -211,24 +211,25 @@ void draw_path(std::vector<math::CubicBezier> &beziers,
     int bezier_amount = beziers.size();
     math::fvec3 point1 = beziers[0].valueAt(0);
 
-    float draw_per_frame = float(bezier_amount) / float(frames);
-    std::cout << "Draw per frame: " << draw_per_frame << std::endl;
-    std::cout << "Frames: " << frames << std::endl;
-    float u = 0.01;
+    int steps_per_bezier = 100;
+    int u = 0;
+    int draw_per_frame = steps_per_bezier * bezier_amount / frames;
 
     for (auto &bezier : beziers)
     {
-        for (float t = 0.01; t < 1.0; t += 0.01, u += 0.01)
+        for (int i = 1; i <= steps_per_bezier; i++, u++)
         {
+            float t = float(i) / float(steps_per_bezier);
             math::fvec3 point2 = bezier.valueAt(t);
             render_line(point1, point2, frame_cache, props);
             point1 = point2;
+
             if (u >= draw_per_frame)
             {
                 std::cout << "Frame " << current_frame << std::endl;
                 video.set_frame(frame_cache, current_frame);
                 current_frame++;
-                u = 0.0;
+                u = 0;
             }
         }
     }
