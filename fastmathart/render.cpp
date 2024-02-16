@@ -12,6 +12,8 @@
 #include "math/vec.h"
 #include "utils/pixelUtils.h"
 
+static std::ofstream concat_file;
+
 void save_to_video_file(video_buffer_t &video_buffer, std::string_view filename,
                         int fps, int width, int height, int frames)
 {
@@ -37,6 +39,8 @@ void save_to_video_file(video_buffer_t &video_buffer, std::string_view filename,
     }
     fwrite(video_buffer.buffer.get(), 1, width * height * frames * 3,
            pipe.get());
+
+    concat_file << "file '" << filename << "'\n";
 }
 
 void render_wait_element(PyAPI::Wait *elem, PyAPI::Config &config,
@@ -425,6 +429,18 @@ void cast_then_render_element(PyAPI::SceneElement *elem, PyAPI::Config &config,
     }
 }
 
+void concat_animation_files(std::string_view filename)
+{
+    std::string command = "ffmpeg -y -f concat -i concat.txt -c copy " + std::string(filename);
+    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "w"),
+                                                  pclose);
+    if (!pipe)
+    {
+        std::cerr << "popen() failed!" << std::endl;
+        return;
+    }
+}
+
 void render_scene(PyAPI::SceneElement *elem, PyAPI::Config &config,
                   std::string_view filename)
 {
@@ -432,9 +448,15 @@ void render_scene(PyAPI::SceneElement *elem, PyAPI::Config &config,
 
     pixel_buffer_t frame_cache(config.width, config.height);
 
+    concat_file = std::ofstream("concat.txt");
+
     while (elem != nullptr)
     {
         cast_then_render_element(elem, config, frame_cache);
         elem = elem->next;
     }
+
+    concat_file.close();
+
+    concat_animation_files(filename);
 }
