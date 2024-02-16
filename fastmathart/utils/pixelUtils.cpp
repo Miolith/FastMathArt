@@ -222,6 +222,16 @@ void pixel_buffer_t::set_pixel(int x, int y, const color_t<RGB_8> &color)
     buffer[index + 2] = color.z;
 }
 
+void pixel_buffer_t::clear(const color_t<RGB_8> color)
+{
+    for (int i = 0; i < width * height; i++)
+    {
+        buffer[i * 3] = color.x;
+        buffer[i * 3 + 1] = color.y;
+        buffer[i * 3 + 2] = color.z;
+    }
+}
+
 video_buffer_t::video_buffer_t(int width, int height, int frames)
     : width(width)
     , height(height)

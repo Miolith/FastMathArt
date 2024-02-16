@@ -105,6 +105,7 @@ struct pixel_buffer_t
     pixel_buffer_t(int width, int height);
     pixel_buffer_t(pixel_buffer_t &&other);
     void set_pixel(int x, int y, const color_t<RGB_8> &color);
+    void clear(const color_t<RGB_8> color = color_t<RGB_8>(0, 0, 0));
 };
 
 struct video_buffer_t

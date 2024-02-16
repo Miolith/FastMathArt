@@ -16,12 +16,13 @@ namespace PyAPI
         NOTHING = 0,
         WAIT = 1,
         PLACE = 2,
-        DRAW = 3
+        DRAW = 3,
+        MORPH = 4
     };
 
     enum ShapeType
     {
-        UKNOWN = 0,
+        NO_TYPE = 0,
         CIRCLE = 1,
         RECTANGLE = 2
     };
@@ -77,11 +78,27 @@ namespace PyAPI
         Properties *properties;
     };
 
+    struct Rectangle
+    {
+        float width;
+        float height;
+        Properties *properties;
+    };
+
     struct Draw
     {
         void **obj_list;
         ShapeType *obj_types;
         int obj_count;
+        float seconds;
+    };
+
+    struct Morph
+    {
+        void* src;
+        void* dest;
+        ShapeType src_type;
+        ShapeType dest_type;
         float seconds;
     };
 } // namespace PyAPI

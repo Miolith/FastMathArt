@@ -9,6 +9,7 @@ ElementType = {
     "WAIT": 1,
     "PLACE": 2,
     "DRAW": 3,
+    "MORPH": 4
 }
 
 lib_file= glob.glob("build/lib*/fastmathart/cbindings*")

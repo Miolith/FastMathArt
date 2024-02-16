@@ -6,6 +6,7 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <functional>
 
 #include "math/bezier.h"
 #include "math/vec.h"
@@ -82,7 +83,7 @@ std::vector<math::CubicBezier> bezier_curve_approx(PyAPI::Circle &circle)
     return path;
 }
 
-math::vec3<int> view_space_to_raster_space(math::fvec3 point, int width,
+math::vec3<int> ndc_to_raster_space(math::fvec3 point, int width,
                                            int height)
 {
     return math::vec3<int>((point.x + float(width) / float(height)) * height
@@ -90,7 +91,7 @@ math::vec3<int> view_space_to_raster_space(math::fvec3 point, int width,
                            (point.y + 1.0f) * height / 2.0f, 0);
 }
 
-int view_space_to_raster_space(float quantity, int width, int height)
+int ndc_to_raster_space(float quantity, int width, int height)
 {
     return (quantity)*std::min(height, width);
 }
@@ -114,11 +115,9 @@ void render_disk(math::vec3<int> center, int radius, pixel_buffer_t &frame_cache
 void render_line(math::fvec3 point1, math::fvec3 point2,
                  pixel_buffer_t &frame_cache, PyAPI::Properties &properties)
 {
-    std::cout << "Placing line" << std::endl;
-
-    math::vec3<int> p1 = view_space_to_raster_space(point1, frame_cache.width,
+    math::vec3<int> p1 = ndc_to_raster_space(point1, frame_cache.width,
                                                     frame_cache.height);
-    math::vec3<int> p2 = view_space_to_raster_space(point2, frame_cache.width,
+    math::vec3<int> p2 = ndc_to_raster_space(point2, frame_cache.width,
                                                     frame_cache.height);
 
     int dx = std::abs(p2.x - p1.x);
@@ -131,7 +130,7 @@ void render_line(math::fvec3 point1, math::fvec3 point2,
         ? cast_to_color_t<RGB_8>(*properties.color)
         : color_t<RGB_8>(255, 255, 255);
 
-    int thickness = view_space_to_raster_space(
+    int thickness = ndc_to_raster_space(
         properties.thickness, frame_cache.width, frame_cache.height);
 
     while (true)
@@ -180,6 +179,32 @@ void place_circle(PyAPI::Circle &circle, pixel_buffer_t &frame_cache)
         place_cubic_bezier(bez, frame_cache, *circle.properties);
 }
 
+std::vector<math::CubicBezier> bezier_curve_approx(PyAPI::Rectangle &rect)
+{
+    std::vector<math::CubicBezier> beziers(4);
+
+    auto center = math::fvec3(rect.properties->x, rect.properties->y, rect.properties->z);
+
+    auto upper_left = center + math::fvec3(-rect.width / 2, rect.height / 2, 0);
+    auto upper_right = center + math::fvec3(rect.width / 2, rect.height / 2, 0);
+    auto lower_right = center + math::fvec3(rect.width / 2, -rect.height / 2, 0);
+    auto lower_left = center + math::fvec3(-rect.width / 2, -rect.height / 2, 0);
+
+    beziers[0] = math::CubicBezier::straightLine(upper_right, upper_left);
+    beziers[1] = math::CubicBezier::straightLine(lower_right, upper_right);
+    beziers[2] = math::CubicBezier::straightLine(lower_left, lower_right);
+    beziers[3] = math::CubicBezier::straightLine(upper_left, lower_left);
+
+    return beziers;
+}
+
+void place_rectangle(PyAPI::Rectangle &rect, pixel_buffer_t &frame_cache)
+{
+    auto beziers = bezier_curve_approx(rect);
+    for (auto &bez : beziers)
+        place_cubic_bezier(bez, frame_cache, *rect.properties);
+}
+
 void render_place_element(PyAPI::Place *elem, PyAPI::Config &config,
                           pixel_buffer_t &frame_cache)
 {
@@ -193,6 +218,9 @@ void render_place_element(PyAPI::Place *elem, PyAPI::Config &config,
             place_circle(*reinterpret_cast<PyAPI::Circle *>(elem->obj_list[j]),
                          frame_cache);
             break;
+        case PyAPI::RECTANGLE:
+            place_rectangle(*reinterpret_cast<PyAPI::Rectangle *>(elem->obj_list[j]),
+                            frame_cache);
         default:
             std::cout << "Unknown object type " << elem->obj_types[j]
                       << std::endl;
@@ -200,9 +228,12 @@ void render_place_element(PyAPI::Place *elem, PyAPI::Config &config,
     }
 }
 
-float smoothstep(float x)
+// cubic bezier easing function
+// faster at the start and end
+// slow in the middle
+float rate_func(float t)
 {
-    return x * x * (3 - 2 * x);
+    return t * (2.0f * t * t - 3.0f * t + 2.0f);
 }
 
 void draw_path(std::vector<math::CubicBezier> &beziers,
@@ -232,14 +263,14 @@ void draw_path(std::vector<math::CubicBezier> &beziers,
             render_line(point1, point2, frame_cache, props);
             point1 = point2;
 
-            float f_u = smoothstep(u);
+            float f_u = rate_func(u);
             std::cout << "f_u: " << f_u << std::endl;
             std::cout << "u: " << u << std::endl;
 
             auto test = std::abs(f_u - draw_per_frame * (current_frame+1.0f));
             std::cout << "test: " << test << std::endl;
             std::cout << "current_frame: " << draw_per_frame *(current_frame + 1.0f) << std::endl;
-            if (f_u > 0.000001f && f_u - draw_per_frame * (current_frame+1.0f) >= -0.000001f)
+            if (f_u > 0.0000001f && f_u - draw_per_frame * (current_frame+1.0f) > -0.000001f)
             {
                 std::cout << "Frame " << current_frame << std::endl;
                 video.set_frame(frame_cache, current_frame);
@@ -259,6 +290,11 @@ void draw_circle(PyAPI::Circle &circle, pixel_buffer_t &frame_cache, video_buffe
     draw_path(beziers, frame_cache, video, *circle.properties);
 }
 
+void draw_rectangle(PyAPI::Rectangle &rect, pixel_buffer_t &frame_cache, video_buffer_t &video)
+{
+    auto beziers = bezier_curve_approx(rect);
+    draw_path(beziers, frame_cache, video, *rect.properties);
+}
 
 void render_draw_element(PyAPI::Draw *elem, PyAPI::Config &config,
                          pixel_buffer_t &frame_cache)
@@ -279,6 +315,10 @@ void render_draw_element(PyAPI::Draw *elem, PyAPI::Config &config,
             draw_circle(*reinterpret_cast<PyAPI::Circle *>(elem->obj_list[j]),
                         frame_cache, video);
             break;
+        case PyAPI::RECTANGLE:
+            draw_rectangle(*reinterpret_cast<PyAPI::Rectangle *>(elem->obj_list[j]),
+                           frame_cache, video);
+            break;
         default:
             std::cout << "Unknown object type " << elem->obj_types[j]
                       << std::endl;
@@ -286,6 +326,74 @@ void render_draw_element(PyAPI::Draw *elem, PyAPI::Config &config,
     }
 
     save_to_video_file(video, "draw.mp4", config.fps, config.width, config.height, frames);
+}
+
+void render_morph_element(PyAPI::Morph *elem, PyAPI::Config &config,
+                          pixel_buffer_t &frame_cache)
+{
+    std::cout << "Morphing " << elem->seconds << " seconds" << std::endl;
+
+    int frames = elem->seconds * config.fps;
+
+    std::vector<math::CubicBezier> src_beziers;
+    std::vector<math::CubicBezier> dest_beziers;
+    PyAPI::Properties props;
+
+    switch (elem->src_type)
+    {
+    case PyAPI::CIRCLE:
+    {
+        auto circle = reinterpret_cast<PyAPI::Circle *>(elem->src);
+        src_beziers = bezier_curve_approx(*circle);
+        props = *circle->properties;
+        break;       
+    }
+    case PyAPI::RECTANGLE:
+    {
+        auto rect = reinterpret_cast<PyAPI::Rectangle *>(elem->src);
+        src_beziers = bezier_curve_approx(*rect);
+        props = *rect->properties;
+        break;
+    }
+    default:
+        std::cout << "Unknown source object type " << elem->src_type << std::endl;
+    }
+
+    switch (elem->dest_type)
+    {
+    case PyAPI::CIRCLE:
+    {
+        auto circle = reinterpret_cast<PyAPI::Circle *>(elem->dest);
+        dest_beziers = bezier_curve_approx(*circle);
+        break;
+    }
+    case PyAPI::RECTANGLE:
+    {
+        auto rect = reinterpret_cast<PyAPI::Rectangle *>(elem->dest);
+        dest_beziers = bezier_curve_approx(*rect);
+        break;
+    }
+    default:
+        std::cout << "Unknown destination object type " << elem->dest_type << std::endl;
+    }
+
+    auto video = video_buffer_t(frame_cache.width, frame_cache.height, frames);
+
+    math::alignPaths(src_beziers, dest_beziers);
+    
+    for (int i = 0; i < frames; i++)
+    {
+        float t = 1.0f - float(i) / float(frames);
+        auto morphed_beziers = math::interpolatePaths(src_beziers, dest_beziers, t);
+        for(auto &bezier : morphed_beziers)
+        {
+            place_cubic_bezier(bezier, frame_cache, props);
+        }
+        video.set_frame(frame_cache, i);
+        frame_cache.clear();
+    }
+
+    save_to_video_file(video, "morph.mp4", config.fps, config.width, config.height, frames);
 }
 
 void cast_then_render_element(PyAPI::SceneElement *elem, PyAPI::Config &config,
@@ -308,6 +416,9 @@ void cast_then_render_element(PyAPI::SceneElement *elem, PyAPI::Config &config,
         break;
     case PyAPI::DRAW:
         render_draw_element(reinterpret_cast<PyAPI::Draw *>(elem->elem), config, frame_cache);
+        break;
+    case PyAPI::MORPH:
+        render_morph_element(reinterpret_cast<PyAPI::Morph *>(elem->elem), config, frame_cache);
         break;
     default:
         std::cout << "Unknown element type " << elem->type << std::endl;

@@ -14,9 +14,21 @@ circle = Circle(
     )
 )
 
+rect = Rectangle(
+    width=1.0,
+    height=1.0,
+    properties=Properties(
+        thickness=0.01,
+        color=rgb(0.8, 0.6, 0.8),
+        fill=None,
+        position=CENTER
+    )
+)
+
 scene.append(
-    Draw(circle),
-    Wait(seconds=4.0)
+    Draw(rect, seconds=2.0),
+    Wait(seconds=0.5),
+    Morph(rect, circle, seconds=2.0)
 )
 
 render(scene, filename="example.mp4")

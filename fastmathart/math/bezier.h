@@ -1,5 +1,10 @@
 #pragma once
+#include <vector>
+#include <algorithm>
+#include <ranges>
+
 #include "vec.h"
+
 
 namespace math
 {
@@ -23,5 +28,91 @@ namespace math
             return lerp(lerp(lerp(p1, p2, t), p2_p3, t),
                         lerp(p2_p3, lerp(p3, p4, t), t), t);
         }
+
+        std::pair<CubicBezier, CubicBezier> split(float t)
+        {
+            auto p12 = lerp(p1, p2, t);
+            auto p23 = lerp(p2, p3, t);
+            auto p34 = lerp(p3, p4, t);
+            auto p123 = lerp(p12, p23, t);
+            auto p234 = lerp(p23, p34, t);
+            auto p1234 = lerp(p123, p234, t);
+            return std::make_pair(CubicBezier{p1, p12, p123, p1234},
+                                  CubicBezier{p1234, p234, p34, p4});
+        }
+
+        float length()
+        {
+            float length = 0.0f;
+            auto prev = valueAt(0.0f);
+            for (int i = 1; i <= 15; i++)
+            {
+                auto next = valueAt(i / 100.0f);
+                length += (next - prev).length();
+                prev = next;
+            }
+            return length;
+        }
+
+        static CubicBezier straightLine(const math::fvec3 &p1, const math::fvec3 &p2)
+        {
+            return CubicBezier{p1, p1, p2, p2};
+        }
     };
+
+    void alignPaths(std::vector<CubicBezier> &path1, std::vector<CubicBezier> &path2)
+    {
+        auto path1_length = path1.size();
+        auto path2_length = path2.size();
+        if (path1_length > path2_length)
+        {
+            auto path1_copy = path1;
+
+            auto indices = std::vector<int>(path1_length);
+            std::iota(indices.begin(), indices.end(), 0);
+
+            std::stable_sort(indices.begin(), indices.end(), [&](auto i, auto j) {
+                return path1[i].length() < path1[j].length();
+            });
+
+            int diff = path1_length - path2_length;
+
+            // split the bezier curves at the longest segments
+            // until the path lengths are equal
+            for (int i = 0; i < diff; i++)
+            {
+                auto index = indices[i];
+                auto [left, right] = path1_copy[index].split(0.5f);
+
+                path1[index] = left;
+                path1.insert(path1.begin() + index + 1, right);
+            }
+        }
+        else if (path2_length > path1_length)
+        {
+            alignPaths(path2, path1);
+        }
+    }
+
+    CubicBezier interpolate(const CubicBezier &path1, const CubicBezier &path2, float t)
+    {
+        return CubicBezier{lerp(path1.p1, path2.p1, t), lerp(path1.p2, path2.p2, t),
+                           lerp(path1.p3, path2.p3, t), lerp(path1.p4, path2.p4, t)};
+    }
+
+    std::vector<CubicBezier> interpolatePaths(const std::vector<CubicBezier> &path1,
+                                              const std::vector<CubicBezier> &path2, float t)
+    {
+        if (path1.size() != path2.size())
+            throw std::runtime_error("Paths must have the same number of curves");
+        
+        std::vector<CubicBezier> result;
+        result.reserve(path1.size());
+        for (std::size_t i = 0; i < path1.size(); i++)
+        {
+            result.push_back(interpolate(path1[i], path2[i], t));
+        }
+        return result;
+    }
+
 } // namespace math
