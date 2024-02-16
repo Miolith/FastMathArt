@@ -341,7 +341,8 @@ void render_morph_element(PyAPI::Morph *elem, PyAPI::Config &config,
 
     std::vector<math::CubicBezier> src_beziers;
     std::vector<math::CubicBezier> dest_beziers;
-    PyAPI::Properties props;
+    PyAPI::Properties src_props;
+    PyAPI::Properties dest_props;
 
     switch (elem->src_type)
     {
@@ -349,14 +350,14 @@ void render_morph_element(PyAPI::Morph *elem, PyAPI::Config &config,
     {
         auto circle = reinterpret_cast<PyAPI::Circle *>(elem->src);
         src_beziers = bezier_curve_approx(*circle);
-        props = *circle->properties;
+        dest_props = *circle->properties;
         break;       
     }
     case PyAPI::RECTANGLE:
     {
         auto rect = reinterpret_cast<PyAPI::Rectangle *>(elem->src);
         src_beziers = bezier_curve_approx(*rect);
-        props = *rect->properties;
+        src_props = *rect->properties;
         break;
     }
     default:
@@ -369,12 +370,14 @@ void render_morph_element(PyAPI::Morph *elem, PyAPI::Config &config,
     {
         auto circle = reinterpret_cast<PyAPI::Circle *>(elem->dest);
         dest_beziers = bezier_curve_approx(*circle);
+        dest_props = *circle->properties;
         break;
     }
     case PyAPI::RECTANGLE:
     {
         auto rect = reinterpret_cast<PyAPI::Rectangle *>(elem->dest);
         dest_beziers = bezier_curve_approx(*rect);
+        dest_props = *rect->properties;
         break;
     }
     default:
@@ -384,10 +387,19 @@ void render_morph_element(PyAPI::Morph *elem, PyAPI::Config &config,
     auto video = video_buffer_t(frame_cache.width, frame_cache.height, frames);
 
     math::alignPaths(src_beziers, dest_beziers);
+
+    auto props = src_props;
+
+    auto src_color = cast_to_color_t<RGB_f32>(*src_props.color);
+    auto dest_color = cast_to_color_t<RGB_f32>(*dest_props.color);
     
     for (int i = 0; i < frames; i++)
     {
         float t = 1.0f - float(i) / float(frames);
+        auto color = src_color * t + dest_color * (1.0f - t);
+
+        float color_values[3] = {color.x, color.y, color.z};
+        props.color->value = color_values;
         auto morphed_beziers = math::interpolatePaths(src_beziers, dest_beziers, t);
         for(auto &bezier : morphed_beziers)
         {
