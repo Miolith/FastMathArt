@@ -109,13 +109,23 @@ int ndc_to_raster_space(float quantity, int width, int height)
 void render_disk(math::vec3<int> center, int radius,
                  pixel_buffer_t &frame_cache, color_t<RGB_8> color)
 {
-    for (int x = -radius; x < radius; x++)
+    int r = radius * radius;
+    for (int x = -radius; x <= radius; x++)
     {
-        for (int y = -radius; y < radius; y++)
+        for (int y = -radius; y <= radius; y++)
         {
-            if (x * x + y * y < radius * radius)
+            int dist = x * x + y * y;
+            if (dist < r)
             {
                 frame_cache.set_pixel(center.x + x, center.y + y, color);
+            }
+            else if (dist == r)
+            {
+                float alpha = std::sqrt(dist) - radius;
+                color_t old_color = frame_cache.get_pixel(center.x + x, center.y + y);
+                auto new_color = lerp(color.toRGB_f32(), old_color.toRGB_f32(), alpha);
+                auto c = color_t<RGB_f32>(new_color.x, new_color.y, new_color.z).toRGB_8();
+                frame_cache.set_pixel(center.x + x, center.y + y, c);
             }
         }
     }

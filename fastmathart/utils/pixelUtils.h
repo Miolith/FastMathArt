@@ -90,6 +90,7 @@ struct color_t<LinearRGB_f32> : math::vec3<float>
     color_t<LinearRGB_8> toLinearRGB_8();
 };
 
+
 template <pixel_format P>
 color_t<P> cast_to_color_t(PyAPI::Color &color);
 
@@ -105,6 +106,7 @@ struct pixel_buffer_t
     pixel_buffer_t(int width, int height);
     pixel_buffer_t(pixel_buffer_t &&other);
     void set_pixel(int x, int y, const color_t<RGB_8> &color);
+    color_t<RGB_8> get_pixel(int x, int y);
     void clear(const color_t<RGB_8> color = color_t<RGB_8>(0, 0, 0));
 };
 

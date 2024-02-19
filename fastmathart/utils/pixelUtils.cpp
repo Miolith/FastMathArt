@@ -222,6 +222,16 @@ void pixel_buffer_t::set_pixel(int x, int y, const color_t<RGB_8> &color)
     buffer[index + 2] = color.z;
 }
 
+
+color_t<RGB_8> pixel_buffer_t::get_pixel(int x, int y)
+{
+    if (x < 0 || x >= width || y < 0 || y >= height)
+        throw std::runtime_error("Pixel out of bounds");
+
+    int index = (y * width + x) * 3;
+    return color_t<RGB_8>(buffer[index], buffer[index + 1], buffer[index + 2]);
+}
+
 void pixel_buffer_t::clear(const color_t<RGB_8> color)
 {
     for (int i = 0; i < width * height; i++)
