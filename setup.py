@@ -5,6 +5,7 @@ module = Extension(
     sources=['fastmathart/cbindings.cpp', 'fastmathart/render.cpp', 'fastmathart/utils/pixelUtils.cpp'],
     language='c++',
     extra_compile_args=['-std=c++2b'],
+    extra_link_args=['-lfmt']
 )
 
 setup(

@@ -28,7 +28,8 @@ rect = Rectangle(
 scene.append(
     Draw(rect, seconds=2.0),
     Wait(seconds=0.5),
-    Morph(rect, circle, seconds=2.0)
+    Morph(rect, circle, seconds=2.0),
+    Wait(seconds=0.5)
 )
 
 render(scene, filename="example.mp4")
