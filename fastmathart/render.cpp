@@ -26,13 +26,12 @@ void save_to_video_file(video_buffer_t &video_buffer, std::string_view filename,
     std::cout << "Frame height: " << height << std::endl;
 
     std::string command = fmt::format(
-        "ffmpeg -y -f rawvideo -s {width}x{height} -pix_fmt rgb24 -r {fps} -i - -an "
-        "-x264opts opencl -vcodec h264 -pix_fmt yuv420p -q:v 5 -f mp4 {filename}",
-        fmt::arg("width", width),
-        fmt::arg("height", height),
-        fmt::arg("fps", fps),
-        fmt::arg("filename", actual_filename)
-    );
+        "ffmpeg -hide_banner -loglevel error -y -f rawvideo -s "
+        "{width}x{height} -pix_fmt rgb24 -r {fps} -i - -an "
+        "-x264opts opencl -vcodec h264 -pix_fmt yuv420p -q:v 5 -f mp4 "
+        "{filename}",
+        fmt::arg("width", width), fmt::arg("height", height),
+        fmt::arg("fps", fps), fmt::arg("filename", actual_filename));
 
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "w"),
                                                   pclose);
@@ -122,9 +121,12 @@ void render_disk(math::vec3<int> center, int radius,
             else if (dist == r)
             {
                 float alpha = std::sqrt(dist) - radius;
-                color_t old_color = frame_cache.get_pixel(center.x + x, center.y + y);
-                auto new_color = lerp(color.toRGB_f32(), old_color.toRGB_f32(), alpha);
-                auto c = color_t<RGB_f32>(new_color.x, new_color.y, new_color.z).toRGB_8();
+                color_t old_color =
+                    frame_cache.get_pixel(center.x + x, center.y + y);
+                auto new_color =
+                    lerp(color.toRGB_f32(), old_color.toRGB_f32(), alpha);
+                auto c = color_t<RGB_f32>(new_color.x, new_color.y, new_color.z)
+                             .toRGB_8();
                 frame_cache.set_pixel(center.x + x, center.y + y, c);
             }
         }

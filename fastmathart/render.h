@@ -95,8 +95,8 @@ namespace PyAPI
 
     struct Morph
     {
-        void* src;
-        void* dest;
+        void *src;
+        void *dest;
         ShapeType src_type;
         ShapeType dest_type;
         float seconds;

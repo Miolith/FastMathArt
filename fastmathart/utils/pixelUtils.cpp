@@ -222,7 +222,6 @@ void pixel_buffer_t::set_pixel(int x, int y, const color_t<RGB_8> &color)
     buffer[index + 2] = color.z;
 }
 
-
 color_t<RGB_8> pixel_buffer_t::get_pixel(int x, int y)
 {
     if (x < 0 || x >= width || y < 0 || y >= height)

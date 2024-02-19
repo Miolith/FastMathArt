@@ -1,10 +1,9 @@
 #pragma once
-#include <vector>
 #include <algorithm>
 #include <ranges>
+#include <vector>
 
 #include "vec.h"
-
 
 namespace math
 {
@@ -37,8 +36,8 @@ namespace math
             auto p123 = lerp(p12, p23, t);
             auto p234 = lerp(p23, p34, t);
             auto p1234 = lerp(p123, p234, t);
-            return std::make_pair(CubicBezier{p1, p12, p123, p1234},
-                                  CubicBezier{p1234, p234, p34, p4});
+            return std::make_pair(CubicBezier{ p1, p12, p123, p1234 },
+                                  CubicBezier{ p1234, p234, p34, p4 });
         }
 
         float length() const
@@ -54,13 +53,15 @@ namespace math
             return length;
         }
 
-        static CubicBezier straightLine(const math::fvec3 &p1, const math::fvec3 &p2)
+        static CubicBezier straightLine(const math::fvec3 &p1,
+                                        const math::fvec3 &p2)
         {
-            return CubicBezier{p1, p1, p2, p2};
+            return CubicBezier{ p1, p1, p2, p2 };
         }
     };
 
-    void alignPaths(std::vector<CubicBezier> &path1, std::vector<CubicBezier> &path2)
+    void alignPaths(std::vector<CubicBezier> &path1,
+                    std::vector<CubicBezier> &path2)
     {
         auto path1_length = path1.size();
         auto path2_length = path2.size();
@@ -72,10 +73,11 @@ namespace math
             // until the path lengths are equal
             for (int i = 0; i < diff; i++)
             {
-                auto longest_bezier = std::max_element(path1.begin(), path1.end(),
-                                              [](const CubicBezier &a, const CubicBezier &b) {
-                                                  return a.length() < b.length();
-                                              });
+                auto longest_bezier = std::max_element(
+                    path1.begin(), path1.end(),
+                    [](const CubicBezier &a, const CubicBezier &b) {
+                        return a.length() < b.length();
+                    });
                 auto index = std::distance(path1.begin(), longest_bezier);
 
                 auto [left_half, right_half] = longest_bezier->split(0.5f);
@@ -90,18 +92,23 @@ namespace math
         }
     }
 
-    CubicBezier interpolate(const CubicBezier &path1, const CubicBezier &path2, float t)
+    CubicBezier interpolate(const CubicBezier &path1, const CubicBezier &path2,
+                            float t)
     {
-        return CubicBezier{lerp(path1.p1, path2.p1, t), lerp(path1.p2, path2.p2, t),
-                           lerp(path1.p3, path2.p3, t), lerp(path1.p4, path2.p4, t)};
+        return CubicBezier{ lerp(path1.p1, path2.p1, t),
+                            lerp(path1.p2, path2.p2, t),
+                            lerp(path1.p3, path2.p3, t),
+                            lerp(path1.p4, path2.p4, t) };
     }
 
-    std::vector<CubicBezier> interpolatePaths(const std::vector<CubicBezier> &path1,
-                                              const std::vector<CubicBezier> &path2, float t)
+    std::vector<CubicBezier>
+    interpolatePaths(const std::vector<CubicBezier> &path1,
+                     const std::vector<CubicBezier> &path2, float t)
     {
         if (path1.size() != path2.size())
-            throw std::runtime_error("Paths must have the same number of curves");
-        
+            throw std::runtime_error(
+                "Paths must have the same number of curves");
+
         std::vector<CubicBezier> result;
         result.reserve(path1.size());
         for (std::size_t i = 0; i < path1.size(); i++)

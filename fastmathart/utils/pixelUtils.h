@@ -90,7 +90,6 @@ struct color_t<LinearRGB_f32> : math::vec3<float>
     color_t<LinearRGB_8> toLinearRGB_8();
 };
 
-
 template <pixel_format P>
 color_t<P> cast_to_color_t(PyAPI::Color &color);
 
