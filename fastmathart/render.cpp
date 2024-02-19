@@ -407,7 +407,7 @@ void render_morph_element(PyAPI::Morph *elem, PyAPI::Config &config,
 
     for (int i = 0; i < frames; i++)
     {
-        float t = 1.0f - float(i) / float(frames);
+        float t = 1.0f - float(i) / float(frames - 1);
         auto color = src_color * t + dest_color * (1.0f - t);
 
         float color_values[3] = { color.x, color.y, color.z };
