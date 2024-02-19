@@ -22,7 +22,7 @@ namespace math
         math::fvec3 p3;
         math::fvec3 p4;
 
-        math::fvec3 valueAt(float t)
+        math::fvec3 valueAt(float t) const
         {
             auto p2_p3 = lerp(p2, p3, t);
             return lerp(lerp(lerp(p1, p2, t), p2_p3, t),
@@ -41,7 +41,7 @@ namespace math
                                   CubicBezier{p1234, p234, p34, p4});
         }
 
-        float length()
+        float length() const
         {
             float length = 0.0f;
             auto prev = valueAt(0.0f);
@@ -66,26 +66,22 @@ namespace math
         auto path2_length = path2.size();
         if (path1_length > path2_length)
         {
-            auto path1_copy = path1;
-
-            auto indices = std::vector<int>(path1_length);
-            std::iota(indices.begin(), indices.end(), 0);
-
-            std::stable_sort(indices.begin(), indices.end(), [&](auto i, auto j) {
-                return path1[i].length() < path1[j].length();
-            });
-
             int diff = path1_length - path2_length;
 
             // split the bezier curves at the longest segments
             // until the path lengths are equal
             for (int i = 0; i < diff; i++)
             {
-                auto index = indices[i];
-                auto [left, right] = path1_copy[index].split(0.5f);
+                auto longest_bezier = std::max_element(path1.begin(), path1.end(),
+                                              [](const CubicBezier &a, const CubicBezier &b) {
+                                                  return a.length() < b.length();
+                                              });
+                auto index = std::distance(path1.begin(), longest_bezier);
 
-                path1[index] = left;
-                path1.insert(path1.begin() + index + 1, right);
+                auto [left_half, right_half] = longest_bezier->split(0.5f);
+
+                path1[index] = left_half;
+                path1.insert(path1.begin() + index + 1, right_half);
             }
         }
         else if (path2_length > path1_length)
