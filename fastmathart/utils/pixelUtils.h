@@ -12,12 +12,48 @@ enum pixel_format
     Oklab
 };
 
-template <pixel_format T>
-struct color_t : math::vec3<float>
-{};
+template <pixel_format F>
+struct _color_implem {};
+
+template <pixel_format F>
+struct color_t : _color_implem<F>
+{
+    using type_x = decltype(_color_implem<F>::x);
+    using type_y = decltype(_color_implem<F>::y);
+    using type_z = decltype(_color_implem<F>::z);
+
+    color_t(type_x x, type_y y, type_z z) : _color_implem<F>(x, y, z) {}
+    
+    friend color_t<F> operator+(const color_t<F> &lhs, const color_t<F> &rhs)
+    {
+        return color_t<F>(lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z);
+    }
+
+    friend color_t<F> operator-(const color_t<F> &lhs, const color_t<F> &rhs)
+    {
+        return color_t<F>(lhs.x - rhs.x, lhs.y - rhs.y, lhs.z - rhs.z);
+    }
+
+    friend color_t<F> operator*(const color_t<F> &lhs, const color_t<F> &rhs)
+    {
+        return color_t<F>(lhs.x * rhs.x, lhs.y * rhs.y, lhs.z * rhs.z);
+    }
+
+    friend color_t<F> blend(const color_t<F> &a, const color_t<F> &b, float t)
+    {
+        return color_t<F>(a.x * (1.0f - t) + b.x * t, a.y * (1.0f - t) + b.y * t, a.z * (1.0f - t) + b.z * t);
+    }
+
+    friend color_t<F> operator*(const color_t<F> &lhs, float rhs)
+    {
+        return color_t<F>(lhs.x * rhs, lhs.y * rhs, lhs.z * rhs);
+    }
+};
+
+
 
 template <>
-struct color_t<Oklab> : math::vec3<float>
+struct _color_implem<Oklab>
 {
     // clang-format off
     union { float l; float x; };
@@ -25,11 +61,11 @@ struct color_t<Oklab> : math::vec3<float>
     union { float b; float z; };
     // clang-format on
 
-    color_t(float l, float a, float b);
+    _color_implem(float l, float a, float b);
 };
 
 template <>
-struct color_t<RGB_8> : math::vec3<uint8_t>
+struct _color_implem<RGB_8>
 {
     // clang-format off
     union { uint8_t r; uint8_t x; };
@@ -37,7 +73,7 @@ struct color_t<RGB_8> : math::vec3<uint8_t>
     union { uint8_t b; uint8_t z; };
     // clang-format on
 
-    color_t(uint8_t r, uint8_t g, uint8_t b);
+    _color_implem(uint8_t r, uint8_t g, uint8_t b);
     color_t<Oklab> toOklab();
     color_t<RGB_f32> toRGB_f32();
     color_t<LinearRGB_8> toLinearRGB_8();
@@ -45,7 +81,7 @@ struct color_t<RGB_8> : math::vec3<uint8_t>
 };
 
 template <>
-struct color_t<RGB_f32> : math::vec3<float>
+struct _color_implem<RGB_f32>
 {
     // clang-format off
     union { float r; float x; };
@@ -53,7 +89,7 @@ struct color_t<RGB_f32> : math::vec3<float>
     union { float b; float z; };
     // clang-format on
 
-    color_t(float r, float g, float b);
+    _color_implem(float r, float g, float b);
     color_t<Oklab> toOklab();
     color_t<RGB_8> toRGB_8();
     color_t<LinearRGB_8> toLinearRGB_8();
@@ -61,7 +97,7 @@ struct color_t<RGB_f32> : math::vec3<float>
 };
 
 template <>
-struct color_t<LinearRGB_8> : math::vec3<uint8_t>
+struct _color_implem<LinearRGB_8>
 {
     // clang-format off
     union { uint8_t r; uint8_t x; };
@@ -69,6 +105,7 @@ struct color_t<LinearRGB_8> : math::vec3<uint8_t>
     union { uint8_t b; uint8_t z; };
     // clang-format on
 
+    _color_implem(uint8_t r, uint8_t g, uint8_t b);
     color_t<RGB_8> toRGB_8();
     color_t<RGB_f32> toRGB_f32();
     color_t<Oklab> toOklab();
@@ -76,7 +113,7 @@ struct color_t<LinearRGB_8> : math::vec3<uint8_t>
 };
 
 template <>
-struct color_t<LinearRGB_f32> : math::vec3<float>
+struct _color_implem<LinearRGB_f32>
 {
     // clang-format off
     union { float r; float x; };
@@ -84,6 +121,7 @@ struct color_t<LinearRGB_f32> : math::vec3<float>
     union { float b; float z; };
     // clang-format on
 
+    _color_implem(float r, float g, float b);
     color_t<RGB_8> toRGB_8();
     color_t<RGB_f32> toRGB_f32();
     color_t<Oklab> toOklab();

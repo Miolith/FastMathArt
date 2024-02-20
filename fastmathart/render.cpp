@@ -122,12 +122,8 @@ void render_disk(math::vec3<int> center, int radius,
             else if (dist == r)
             {
                 float alpha = std::sqrt(dist) - radius;
-                color_t old_color =
-                    frame_cache.get_pixel(center.x + x, center.y + y);
-                auto new_color =
-                    lerp(color.toRGB_f32(), old_color.toRGB_f32(), alpha);
-                auto c = color_t<RGB_f32>(new_color.x, new_color.y, new_color.z)
-                             .toRGB_8();
+                auto c = blend(frame_cache.get_pixel(center.x + x, center.y + y),
+                               color, alpha);
                 frame_cache.set_pixel(center.x + x, center.y + y, c);
             }
         }
@@ -180,7 +176,7 @@ void place_cubic_bezier(math::CubicBezier &bezier, pixel_buffer_t &frame_cache,
     std::cout << "Placing cubic bezier" << std::endl;
 
     // Divide the cubic bezier into segments
-    // Draw each segment
+    // Render each segment
 
     math::fvec3 point1 = bezier.valueAt(0);
 
