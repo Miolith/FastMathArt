@@ -21,10 +21,10 @@ void save_to_video_file(video_buffer_t &video_buffer, std::string_view filename,
 {
     static int num_files = 0;
     std::string actual_filename = fmt::format("{}_{}", num_files, filename);
-    std::cout << "Saving to video file " << filename << std::endl;
-    std::cout << "Frame rate: " << fps << std::endl;
-    std::cout << "Frame width: " << width << std::endl;
-    std::cout << "Frame height: " << height << std::endl;
+    std::cout << "Saving to video file " << filename << "\n";
+    std::cout << "Frame rate: " << fps << "\n";
+    std::cout << "Frame width: " << width << "\n";
+    std::cout << "Frame height: " << height << "\n";
 
     std::string command = fmt::format(
         "ffmpeg -hide_banner -loglevel error -y -f rawvideo -s "
@@ -38,7 +38,7 @@ void save_to_video_file(video_buffer_t &video_buffer, std::string_view filename,
                                                   pclose);
     if (!pipe)
     {
-        std::cerr << "popen() failed!" << std::endl;
+        std::cerr << "popen() failed!" << "\n";
         return;
     }
     fwrite(video_buffer.buffer.get(), 1, width * height * frames * 3,
@@ -52,7 +52,7 @@ void save_to_video_file(video_buffer_t &video_buffer, std::string_view filename,
 void render_element(PyAPI::Wait *elem, PyAPI::Config &config,
                          pixel_buffer_t &frame_cache)
 {
-    std::cout << "Waiting for " << elem->seconds << " seconds" << std::endl;
+    std::cout << "Waiting for " << elem->seconds << " seconds" << "\n";
     int frames = elem->seconds * config.fps;
 
     video_buffer_t video_buffer(config.width, config.height, frames);
@@ -173,7 +173,7 @@ void render_line(math::fvec3 point1, math::fvec3 point2,
 void place_cubic_bezier(math::CubicBezier &bezier, pixel_buffer_t &frame_cache,
                         PyAPI::Properties props)
 {
-    std::cout << "Placing cubic bezier" << std::endl;
+    std::cout << "Placing cubic bezier" << "\n";
 
     // Divide the cubic bezier into segments
     // Render each segment
@@ -229,7 +229,7 @@ void place_shape(PyAPI::Rectangle &rect, pixel_buffer_t &frame_cache)
 void render_element(PyAPI::Place *elem, PyAPI::Config &config,
                           pixel_buffer_t &frame_cache)
 {
-    std::cout << "Placing " << elem->obj_count << " objects" << std::endl;
+    std::cout << "Placing " << elem->obj_count << " objects" << "\n";
 
     for (int j = 0; j < elem->obj_count; j++)
     {
@@ -247,11 +247,16 @@ float rate_func(float t)
     return t * (2.0f * t * t - 3.0f * t + 2.0f);
 }
 
+float ease_in_out_cubic(float t)
+{
+    return t < 0.5f ? 4.0f * t * t * t : 1.0f - std::pow(-2.0f * t + 2.0f, 3.0f) / 2.0f;
+}
+
 void draw_path(std::vector<math::CubicBezier> &beziers,
                pixel_buffer_t &frame_cache, video_buffer_t &video,
                PyAPI::Properties &props)
 {
-    std::cout << "Drawing path" << std::endl;
+    std::cout << "Drawing path" << "\n";
 
     int frames = video.frames;
     int current_frame = 0;
@@ -275,17 +280,17 @@ void draw_path(std::vector<math::CubicBezier> &beziers,
             point1 = point2;
 
             float f_u = rate_func(u);
-            std::cout << "f_u: " << f_u << std::endl;
-            std::cout << "u: " << u << std::endl;
+            std::cout << "f_u: " << f_u << "\n";
+            std::cout << "u: " << u << "\n";
 
             auto test = std::abs(f_u - draw_per_frame * (current_frame + 1.0f));
-            std::cout << "test: " << test << std::endl;
+            std::cout << "test: " << test << "\n";
             std::cout << "current_frame: "
-                      << draw_per_frame * (current_frame + 1.0f) << std::endl;
+                      << draw_per_frame * (current_frame + 1.0f) << "\n";
             if (f_u > 0.0000001f
                 && f_u - draw_per_frame * (current_frame + 1.0f) > -0.000001f)
             {
-                std::cout << "Frame " << current_frame << std::endl;
+                std::cout << "Frame " << current_frame << "\n";
                 video.set_frame(frame_cache, current_frame);
                 current_frame++;
             }
@@ -313,11 +318,11 @@ void draw_shape(PyAPI::Rectangle &rect, pixel_buffer_t &frame_cache,
 void render_element(PyAPI::Draw *elem, PyAPI::Config &config,
                          pixel_buffer_t &frame_cache)
 {
-    std::cout << "Drawing " << elem->obj_count << " objects" << std::endl;
+    std::cout << "Drawing " << elem->obj_count << " objects" << "\n";
 
     int frames = elem->seconds * config.fps;
-    std::cout << "Frames: " << frames << std::endl;
-    std::cout << "Seconds: " << elem->seconds << std::endl;
+    std::cout << "Frames: " << frames << "\n";
+    std::cout << "Seconds: " << elem->seconds << "\n";
 
     auto video = video_buffer_t(frame_cache.width, frame_cache.height, frames);
 
@@ -335,7 +340,7 @@ void render_element(PyAPI::Draw *elem, PyAPI::Config &config,
 void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
                           pixel_buffer_t &frame_cache)
 {
-    std::cout << "Morphing " << elem->seconds << " seconds" << std::endl;
+    std::cout << "Morphing " << elem->seconds << " seconds" << "\n";
 
     int frames = elem->seconds * config.fps;
 
@@ -388,13 +393,15 @@ void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
 
 void concat_animation_files(std::string_view filename)
 {
-    std::string command =
-        "ffmpeg -y -f concat -i concat.txt -c copy " + std::string(filename);
+    std::string command = fmt::format(
+        "ffmpeg -y -f concat -i concat.txt -c copy {name}",
+        fmt::arg("name", filename));
+
     std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "w"),
                                                   pclose);
     if (!pipe)
     {
-        std::cerr << "popen() failed!" << std::endl;
+        std::cerr << "popen() failed!" << "\n";
         return;
     }
 }
@@ -402,7 +409,7 @@ void concat_animation_files(std::string_view filename)
 void render_scene(PyAPI::SceneElement *elem, PyAPI::Config &config,
                   std::string_view filename)
 {
-    std::cout << "Rendering scene to " << filename << std::endl;
+    std::cout << "Rendering scene to " << filename << "\n";
 
     pixel_buffer_t frame_cache(config.width, config.height);
 
