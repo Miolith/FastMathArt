@@ -1,5 +1,12 @@
 import ctypes
-import fastmathart.api_bindings as cbind
+
+ElementType = {
+    "NOTHING": 0,
+    "WAIT": 1,
+    "PLACE": 2,
+    "DRAW": 3,
+    "MORPH": 4
+}
 
 class SceneElement(ctypes.Structure):
     _fields_ = [
@@ -21,7 +28,7 @@ class SceneBuilder:
             element.elem = ctypes.cast(ctypes.pointer(arg), ctypes.POINTER(ctypes.c_void_p))
 
             class_name = arg.__class__.__name__.upper()
-            element.type = cbind.ElementType.get(class_name, cbind.ElementType["NOTHING"])
+            element.type = ElementType.get(class_name, ElementType["NOTHING"])
             if self._head is None:
                 self._head = element
             else:
