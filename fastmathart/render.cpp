@@ -12,6 +12,7 @@
 #include "math/bezier.h"
 #include "math/vec.h"
 #include "utils/pixelUtils.h"
+#include "api_bindings.h"
 
 static std::ofstream concat_file;
 
@@ -48,7 +49,7 @@ void save_to_video_file(video_buffer_t &video_buffer, std::string_view filename,
     num_files++;
 }
 
-void render_wait_element(PyAPI::Wait *elem, PyAPI::Config &config,
+void render_element(PyAPI::Wait *elem, PyAPI::Config &config,
                          pixel_buffer_t &frame_cache)
 {
     std::cout << "Waiting for " << elem->seconds << " seconds" << std::endl;
@@ -193,7 +194,7 @@ void place_cubic_bezier(math::CubicBezier &bezier, pixel_buffer_t &frame_cache,
     }
 }
 
-void place_circle(PyAPI::Circle &circle, pixel_buffer_t &frame_cache)
+void place_shape(PyAPI::Circle &circle, pixel_buffer_t &frame_cache)
 {
     auto beziers = bezier_curve_approx(circle);
     for (auto &bez : beziers)
@@ -222,34 +223,23 @@ std::vector<math::CubicBezier> bezier_curve_approx(PyAPI::Rectangle &rect)
     return beziers;
 }
 
-void place_rectangle(PyAPI::Rectangle &rect, pixel_buffer_t &frame_cache)
+void place_shape(PyAPI::Rectangle &rect, pixel_buffer_t &frame_cache)
 {
     auto beziers = bezier_curve_approx(rect);
     for (auto &bez : beziers)
         place_cubic_bezier(bez, frame_cache, *rect.properties);
 }
 
-void render_place_element(PyAPI::Place *elem, PyAPI::Config &config,
+void render_element(PyAPI::Place *elem, PyAPI::Config &config,
                           pixel_buffer_t &frame_cache)
 {
     std::cout << "Placing " << elem->obj_count << " objects" << std::endl;
 
     for (int j = 0; j < elem->obj_count; j++)
     {
-        switch (elem->obj_types[j])
-        {
-        case PyAPI::CIRCLE:
-            place_circle(*reinterpret_cast<PyAPI::Circle *>(elem->obj_list[j]),
-                         frame_cache);
-            break;
-        case PyAPI::RECTANGLE:
-            place_rectangle(
-                *reinterpret_cast<PyAPI::Rectangle *>(elem->obj_list[j]),
-                frame_cache);
-        default:
-            std::cout << "Unknown object type " << elem->obj_types[j]
-                      << std::endl;
-        }
+        PyAPI::shape_visitor([&](auto *shape) -> void {
+            place_shape(*shape, frame_cache);
+        }, elem->obj_list[j], elem->obj_types[j]);
     }
 }
 
@@ -310,21 +300,21 @@ void draw_path(std::vector<math::CubicBezier> &beziers,
     video.set_frame(frame_cache, frames - 1);
 }
 
-void draw_circle(PyAPI::Circle &circle, pixel_buffer_t &frame_cache,
+void draw_shape(PyAPI::Circle &circle, pixel_buffer_t &frame_cache,
                  video_buffer_t &video)
 {
     auto beziers = bezier_curve_approx(circle);
     draw_path(beziers, frame_cache, video, *circle.properties);
 }
 
-void draw_rectangle(PyAPI::Rectangle &rect, pixel_buffer_t &frame_cache,
+void draw_shape(PyAPI::Rectangle &rect, pixel_buffer_t &frame_cache,
                     video_buffer_t &video)
 {
     auto beziers = bezier_curve_approx(rect);
     draw_path(beziers, frame_cache, video, *rect.properties);
 }
 
-void render_draw_element(PyAPI::Draw *elem, PyAPI::Config &config,
+void render_element(PyAPI::Draw *elem, PyAPI::Config &config,
                          pixel_buffer_t &frame_cache)
 {
     std::cout << "Drawing " << elem->obj_count << " objects" << std::endl;
@@ -337,28 +327,16 @@ void render_draw_element(PyAPI::Draw *elem, PyAPI::Config &config,
 
     for (int j = 0; j < elem->obj_count; j++)
     {
-        switch (elem->obj_types[j])
-        {
-        case PyAPI::CIRCLE:
-            draw_circle(*reinterpret_cast<PyAPI::Circle *>(elem->obj_list[j]),
-                        frame_cache, video);
-            break;
-        case PyAPI::RECTANGLE:
-            draw_rectangle(
-                *reinterpret_cast<PyAPI::Rectangle *>(elem->obj_list[j]),
-                frame_cache, video);
-            break;
-        default:
-            std::cout << "Unknown object type " << elem->obj_types[j]
-                      << std::endl;
-        }
+        PyAPI::shape_visitor([&](auto *shape) -> void {
+            draw_shape(*shape, frame_cache, video);
+        }, elem->obj_list[j], elem->obj_types[j]);
     }
 
     save_to_video_file(video, "draw.mp4", config.fps, config.width,
                        config.height, frames);
 }
 
-void render_morph_element(PyAPI::Morph *elem, PyAPI::Config &config,
+void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
                           pixel_buffer_t &frame_cache)
 {
     std::cout << "Morphing " << elem->seconds << " seconds" << std::endl;
@@ -370,43 +348,15 @@ void render_morph_element(PyAPI::Morph *elem, PyAPI::Config &config,
     PyAPI::Properties src_props;
     PyAPI::Properties dest_props;
 
-    switch (elem->src_type)
-    {
-    case PyAPI::CIRCLE: {
-        auto circle = reinterpret_cast<PyAPI::Circle *>(elem->src);
-        src_beziers = bezier_curve_approx(*circle);
-        dest_props = *circle->properties;
-        break;
-    }
-    case PyAPI::RECTANGLE: {
-        auto rect = reinterpret_cast<PyAPI::Rectangle *>(elem->src);
-        src_beziers = bezier_curve_approx(*rect);
-        src_props = *rect->properties;
-        break;
-    }
-    default:
-        std::cout << "Unknown source object type " << elem->src_type
-                  << std::endl;
-    }
+    PyAPI::shape_visitor([&](auto *shape) -> void {
+        src_beziers = bezier_curve_approx(*shape);
+        src_props = *shape->properties;
+    }, elem->src, elem->src_type);
 
-    switch (elem->dest_type)
-    {
-    case PyAPI::CIRCLE: {
-        auto circle = reinterpret_cast<PyAPI::Circle *>(elem->dest);
-        dest_beziers = bezier_curve_approx(*circle);
-        dest_props = *circle->properties;
-        break;
-    }
-    case PyAPI::RECTANGLE: {
-        auto rect = reinterpret_cast<PyAPI::Rectangle *>(elem->dest);
-        dest_beziers = bezier_curve_approx(*rect);
-        dest_props = *rect->properties;
-        break;
-    }
-    default:
-        std::cout << "Unknown destination object type " << elem->dest_type
-                  << std::endl;
-    }
+    PyAPI::shape_visitor([&](auto *shape) -> void {
+            dest_beziers = bezier_curve_approx(*shape);
+            dest_props = *shape->properties;
+        }, elem->dest, elem->dest_type);
 
     auto video = video_buffer_t(frame_cache.width, frame_cache.height, frames);
 
@@ -440,38 +390,6 @@ void render_morph_element(PyAPI::Morph *elem, PyAPI::Config &config,
                        config.height, frames);
 }
 
-void cast_then_render_element(PyAPI::SceneElement *elem, PyAPI::Config &config,
-                              pixel_buffer_t &frame_cache)
-{
-    if (elem->elem == nullptr)
-    {
-        std::cout << "Null element->elem" << std::endl;
-        return;
-    }
-
-    switch (elem->type)
-    {
-    case PyAPI::WAIT:
-        render_wait_element(reinterpret_cast<PyAPI::Wait *>(elem->elem), config,
-                            frame_cache);
-        break;
-    case PyAPI::PLACE:
-        render_place_element(reinterpret_cast<PyAPI::Place *>(elem->elem),
-                             config, frame_cache);
-        break;
-    case PyAPI::DRAW:
-        render_draw_element(reinterpret_cast<PyAPI::Draw *>(elem->elem), config,
-                            frame_cache);
-        break;
-    case PyAPI::MORPH:
-        render_morph_element(reinterpret_cast<PyAPI::Morph *>(elem->elem),
-                             config, frame_cache);
-        break;
-    default:
-        std::cout << "Unknown element type " << elem->type << std::endl;
-    }
-}
-
 void concat_animation_files(std::string_view filename)
 {
     std::string command =
@@ -496,7 +414,9 @@ void render_scene(PyAPI::SceneElement *elem, PyAPI::Config &config,
 
     while (elem != nullptr)
     {
-        cast_then_render_element(elem, config, frame_cache);
+        PyAPI::element_visitor([&](auto *element) -> void {
+            render_element(element, config, frame_cache);
+        }, elem);
         elem = elem->next;
     }
 

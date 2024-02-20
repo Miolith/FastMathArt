@@ -1,5 +1,5 @@
 from typing import List, Union
-from fastmathart.cbindings import lib
+from fastmathart.api_bindings import lib
 from ctypes import pointer, c_char_p
 from fastmathart.config import ConfigBinding
 from fastmathart.scene import SceneBuilder

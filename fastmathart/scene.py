@@ -1,5 +1,5 @@
 import ctypes
-import fastmathart.cbindings as cbind
+import fastmathart.api_bindings as cbind
 
 class SceneElement(ctypes.Structure):
     _fields_ = [
