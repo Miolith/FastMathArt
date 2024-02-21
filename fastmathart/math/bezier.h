@@ -21,6 +21,12 @@ namespace math
         math::fvec3 p3;
         math::fvec3 p4;
 
+        CubicBezier(math::fvec3 p1, math::fvec3 p2,
+                    math::fvec3 p3, math::fvec3 p4)
+            : p1(p1), p2(p2), p3(p3), p4(p4) {}
+        
+        CubicBezier() = default;
+
         math::fvec3 valueAt(float t) const
         {
             auto p2_p3 = lerp(p2, p3, t);

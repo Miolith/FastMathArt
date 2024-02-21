@@ -13,6 +13,7 @@
 #include "math/vec.h"
 #include "utils/pixelUtils.h"
 #include "api_bindings.h"
+#include "utils/cWrapper.h"
 
 static std::ofstream concat_file;
 
@@ -34,13 +35,8 @@ void save_to_video_file(video_buffer_t &video_buffer, std::string_view filename,
         fmt::arg("width", width), fmt::arg("height", height),
         fmt::arg("fps", fps), fmt::arg("filename", actual_filename));
 
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "w"),
-                                                  pclose);
-    if (!pipe)
-    {
-        std::cerr << "popen() failed!" << "\n";
-        return;
-    }
+    auto pipe = popen2(command.c_str(), "w");
+
     fwrite(video_buffer.buffer.get(), 1, width * height * frames * 3,
            pipe.get());
 
@@ -346,27 +342,27 @@ void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
 
     std::vector<math::CubicBezier> src_beziers;
     std::vector<math::CubicBezier> dest_beziers;
-    PyAPI::Properties src_props;
-    PyAPI::Properties dest_props;
+    PyAPI::Properties *src_props = nullptr;
+    PyAPI::Properties *dest_props = nullptr;
 
     PyAPI::shape_visitor([&](auto *shape) -> void {
         src_beziers = bezier_curve_approx(*shape);
-        src_props = *shape->properties;
+        src_props = shape->properties;
     }, elem->src, elem->src_type);
 
     PyAPI::shape_visitor([&](auto *shape) -> void {
             dest_beziers = bezier_curve_approx(*shape);
-            dest_props = *shape->properties;
+            dest_props = shape->properties;
         }, elem->dest, elem->dest_type);
 
     auto video = video_buffer_t(frame_cache.width, frame_cache.height, frames);
 
     math::alignPaths(src_beziers, dest_beziers);
 
-    auto props = src_props;
+    auto props = *src_props;
 
-    auto src_color = cast_to_color_t<RGB_f32>(*src_props.color);
-    auto dest_color = cast_to_color_t<RGB_f32>(*dest_props.color);
+    auto src_color = cast_to_color_t<RGB_f32>(*src_props->color);
+    auto dest_color = cast_to_color_t<RGB_f32>(*dest_props->color);
 
     for (int i = 0; i < frames; i++)
     {
@@ -397,13 +393,7 @@ void concat_animation_files(std::string_view filename)
         "ffmpeg -y -f concat -i concat.txt -c copy {name}",
         fmt::arg("name", filename));
 
-    std::unique_ptr<FILE, decltype(&pclose)> pipe(popen(command.c_str(), "w"),
-                                                  pclose);
-    if (!pipe)
-    {
-        std::cerr << "popen() failed!" << "\n";
-        return;
-    }
+    auto pipe = popen2(command.c_str(), "w");
 }
 
 void render_scene(PyAPI::SceneElement *elem, PyAPI::Config &config,
