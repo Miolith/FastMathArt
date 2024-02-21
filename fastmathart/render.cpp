@@ -9,11 +9,11 @@
 #include <string>
 #include <string_view>
 
+#include "api_bindings.h"
 #include "math/bezier.h"
 #include "math/vec.h"
-#include "utils/pixelUtils.h"
-#include "api_bindings.h"
 #include "utils/cWrapper.h"
+#include "utils/pixelUtils.h"
 
 static std::ofstream concat_file;
 
@@ -46,9 +46,10 @@ void save_to_video_file(video_buffer_t &video_buffer, std::string_view filename,
 }
 
 void render_element(PyAPI::Wait *elem, PyAPI::Config &config,
-                         pixel_buffer_t &frame_cache)
+                    pixel_buffer_t &frame_cache)
 {
-    std::cout << "Waiting for " << elem->seconds << " seconds" << "\n";
+    std::cout << "Waiting for " << elem->seconds << " seconds"
+              << "\n";
     int frames = elem->seconds * config.fps;
 
     video_buffer_t video_buffer(config.width, config.height, frames);
@@ -118,8 +119,9 @@ void render_disk(math::vec3<int> center, int radius,
             else if (dist == r)
             {
                 float alpha = std::sqrt(dist) - radius;
-                auto c = blend(frame_cache.get_pixel(center.x + x, center.y + y),
-                               color, alpha);
+                auto c =
+                    blend(frame_cache.get_pixel(center.x + x, center.y + y),
+                          color, alpha);
                 frame_cache.set_pixel(center.x + x, center.y + y, c);
             }
         }
@@ -169,7 +171,8 @@ void render_line(math::fvec3 point1, math::fvec3 point2,
 void place_cubic_bezier(math::CubicBezier &bezier, pixel_buffer_t &frame_cache,
                         PyAPI::Properties props)
 {
-    std::cout << "Placing cubic bezier" << "\n";
+    std::cout << "Placing cubic bezier"
+              << "\n";
 
     // Divide the cubic bezier into segments
     // Render each segment
@@ -223,15 +226,16 @@ void place_shape(PyAPI::Rectangle &rect, pixel_buffer_t &frame_cache)
 }
 
 void render_element(PyAPI::Place *elem, PyAPI::Config &config,
-                          pixel_buffer_t &frame_cache)
+                    pixel_buffer_t &frame_cache)
 {
-    std::cout << "Placing " << elem->obj_count << " objects" << "\n";
+    std::cout << "Placing " << elem->obj_count << " objects"
+              << "\n";
 
     for (int j = 0; j < elem->obj_count; j++)
     {
-        PyAPI::shape_visitor([&](auto *shape) -> void {
-            place_shape(*shape, frame_cache);
-        }, elem->obj_list[j], elem->obj_types[j]);
+        PyAPI::shape_visitor(
+            [&](auto *shape) -> void { place_shape(*shape, frame_cache); },
+            elem->obj_list[j], elem->obj_types[j]);
     }
 }
 
@@ -245,48 +249,55 @@ float rate_func(float t)
 
 float ease_in_out_cubic(float t)
 {
-    return t < 0.5f ? 4.0f * t * t * t : 1.0f - std::pow(-2.0f * t + 2.0f, 3.0f) / 2.0f;
+    return t < 0.5f ? 4.0f * t * t * t
+                    : 1.0f - std::pow(-2.0f * t + 2.0f, 3.0f) / 2.0f;
 }
 
 void draw_path(std::vector<math::CubicBezier> &beziers,
                pixel_buffer_t &frame_cache, video_buffer_t &video,
                PyAPI::Properties &props)
 {
-    std::cout << "Drawing path" << "\n";
+    std::cout << "Drawing path"
+              << "\n";
 
-    int frames = video.frames;
+    const int total_frames = video.frames;
     int current_frame = 0;
-    int bezier_amount = beziers.size();
     math::fvec3 point1 = beziers[0].valueAt(0);
 
-    int steps_per_bezier = 100;
-    float u = 0.0f;
-    int total_steps = steps_per_bezier * bezier_amount;
-    float draw_per_frame = 1.0 / frames;
+    const int steps_per_bezier = 100;
+    const float draw_per_frame = 1.0 / (total_frames - 1);
 
-    float u_step = 1.0f / float(total_steps);
+    float accumulated_length = 0.0f;
+    const float total_length = std::accumulate(
+        beziers.begin(), beziers.end(), 0.0f,
+        [=](float acc, math::CubicBezier &bezier) {
+            return acc + bezier.length(steps_per_bezier);
+        }
+    );
+    const float length_ratio = 1.0f / total_length;
 
     for (auto &bezier : beziers)
     {
-        for (int i = 1; i <= steps_per_bezier; i++, u += u_step)
+        for (int i = 1; i <= steps_per_bezier; i++)
         {
             float t = float(i) / float(steps_per_bezier);
             math::fvec3 point2 = bezier.valueAt(t);
             render_line(point1, point2, frame_cache, props);
+
+            const float length = (point2 - point1).length();
+            accumulated_length += length * length_ratio;
+
             point1 = point2;
 
-            float f_u = rate_func(u);
-            std::cout << "f_u: " << f_u << "\n";
-            std::cout << "u: " << u << "\n";
-
-            auto test = std::abs(f_u - draw_per_frame * (current_frame + 1.0f));
-            std::cout << "test: " << test << "\n";
-            std::cout << "current_frame: "
-                      << draw_per_frame * (current_frame + 1.0f) << "\n";
-            if (f_u > 0.0000001f
-                && f_u - draw_per_frame * (current_frame + 1.0f) > -0.000001f)
+            if (accumulated_length - draw_per_frame * (current_frame + 1.0f)
+                >= -0.01f)
             {
-                std::cout << "Frame " << current_frame << "\n";
+                std::cout << "Frame " << current_frame << "/" << total_frames - 1
+                          << "\n";
+                std::cout << "accumulated_length: " << accumulated_length
+                          << " easing: " << ease_in_out_cubic(draw_per_frame * (current_frame + 1.0f))
+                          << " minus: " << accumulated_length - ease_in_out_cubic(draw_per_frame * (current_frame + 1.0f))
+                            << "\n";
                 video.set_frame(frame_cache, current_frame);
                 current_frame++;
             }
@@ -294,27 +305,28 @@ void draw_path(std::vector<math::CubicBezier> &beziers,
     }
 
     // Save the last frame
-    video.set_frame(frame_cache, frames - 1);
+    video.set_frame(frame_cache, total_frames - 1);
 }
 
 void draw_shape(PyAPI::Circle &circle, pixel_buffer_t &frame_cache,
-                 video_buffer_t &video)
+                video_buffer_t &video)
 {
     auto beziers = bezier_curve_approx(circle);
     draw_path(beziers, frame_cache, video, *circle.properties);
 }
 
 void draw_shape(PyAPI::Rectangle &rect, pixel_buffer_t &frame_cache,
-                    video_buffer_t &video)
+                video_buffer_t &video)
 {
     auto beziers = bezier_curve_approx(rect);
     draw_path(beziers, frame_cache, video, *rect.properties);
 }
 
 void render_element(PyAPI::Draw *elem, PyAPI::Config &config,
-                         pixel_buffer_t &frame_cache)
+                    pixel_buffer_t &frame_cache)
 {
-    std::cout << "Drawing " << elem->obj_count << " objects" << "\n";
+    std::cout << "Drawing " << elem->obj_count << " objects"
+              << "\n";
 
     int frames = elem->seconds * config.fps;
     std::cout << "Frames: " << frames << "\n";
@@ -324,9 +336,11 @@ void render_element(PyAPI::Draw *elem, PyAPI::Config &config,
 
     for (int j = 0; j < elem->obj_count; j++)
     {
-        PyAPI::shape_visitor([&](auto *shape) -> void {
-            draw_shape(*shape, frame_cache, video);
-        }, elem->obj_list[j], elem->obj_types[j]);
+        PyAPI::shape_visitor(
+            [&](auto *shape) -> void {
+                draw_shape(*shape, frame_cache, video);
+            },
+            elem->obj_list[j], elem->obj_types[j]);
     }
 
     save_to_video_file(video, "draw.mp4", config.fps, config.width,
@@ -334,26 +348,29 @@ void render_element(PyAPI::Draw *elem, PyAPI::Config &config,
 }
 
 void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
-                          pixel_buffer_t &frame_cache)
+                    pixel_buffer_t &frame_cache)
 {
-    std::cout << "Morphing " << elem->seconds << " seconds" << "\n";
+    std::cout << "Morphing " << elem->seconds << " seconds"
+              << "\n";
 
     int frames = elem->seconds * config.fps;
 
-    std::vector<math::CubicBezier> src_beziers;
-    std::vector<math::CubicBezier> dest_beziers;
-    PyAPI::Properties *src_props = nullptr;
-    PyAPI::Properties *dest_props = nullptr;
+    std::vector<math::CubicBezier> src_beziers, dest_beziers;
+    PyAPI::Properties *src_props = nullptr, *dest_props = nullptr;
 
-    PyAPI::shape_visitor([&](auto *shape) -> void {
-        src_beziers = bezier_curve_approx(*shape);
-        src_props = shape->properties;
-    }, elem->src, elem->src_type);
+    PyAPI::shape_visitor(
+        [&](auto *shape) -> void {
+            src_beziers = bezier_curve_approx(*shape);
+            src_props = shape->properties;
+        },
+        elem->src, elem->src_type);
 
-    PyAPI::shape_visitor([&](auto *shape) -> void {
+    PyAPI::shape_visitor(
+        [&](auto *shape) -> void {
             dest_beziers = bezier_curve_approx(*shape);
             dest_props = shape->properties;
-        }, elem->dest, elem->dest_type);
+        },
+        elem->dest, elem->dest_type);
 
     auto video = video_buffer_t(frame_cache.width, frame_cache.height, frames);
 
@@ -361,8 +378,8 @@ void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
 
     auto props = *src_props;
 
-    auto src_color = cast_to_color_t<RGB_f32>(*src_props->color);
-    auto dest_color = cast_to_color_t<RGB_f32>(*dest_props->color);
+    color_t<RGB_f32> src_color = cast_to_color_t<RGB_f32>(*src_props->color);
+    color_t<RGB_f32> dest_color = cast_to_color_t<RGB_f32>(*dest_props->color);
 
     for (int i = 0; i < frames; i++)
     {
@@ -389,9 +406,9 @@ void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
 
 void concat_animation_files(std::string_view filename)
 {
-    std::string command = fmt::format(
-        "ffmpeg -y -f concat -i concat.txt -c copy {name}",
-        fmt::arg("name", filename));
+    std::string command =
+        fmt::format("ffmpeg -y -f concat -i concat.txt -c copy {name}",
+                    fmt::arg("name", filename));
 
     auto pipe = popen2(command.c_str(), "w");
 }
@@ -407,9 +424,11 @@ void render_scene(PyAPI::SceneElement *elem, PyAPI::Config &config,
 
     while (elem != nullptr)
     {
-        PyAPI::element_visitor([&](auto *element) -> void {
-            render_element(element, config, frame_cache);
-        }, elem);
+        PyAPI::element_visitor(
+            [&](auto *element) -> void {
+                render_element(element, config, frame_cache);
+            },
+            elem);
         elem = elem->next;
     }
 

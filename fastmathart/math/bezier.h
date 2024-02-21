@@ -46,11 +46,11 @@ namespace math
                                   CubicBezier{ p1234, p234, p34, p4 });
         }
 
-        float length() const
+        float length(int precision = 15) const
         {
             float length = 0.0f;
             auto prev = valueAt(0.0f);
-            for (int i = 1; i <= 15; i++)
+            for (int i = 1; i <= precision; i++)
             {
                 auto next = valueAt(i / 100.0f);
                 length += (next - prev).length();
