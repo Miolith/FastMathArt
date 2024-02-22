@@ -1,4 +1,4 @@
-from ctypes import c_float, Structure, POINTER, pointer
+from ctypes import c_float, Structure, POINTER, pointer, c_int
 from fastmathart.const import *
 from fastmathart.properties import Properties
 

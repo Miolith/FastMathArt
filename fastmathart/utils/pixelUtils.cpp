@@ -273,7 +273,7 @@ void pixel_buffer_t::set_pixel(int x, int y, const color_t<RGB_8> &color)
 color_t<RGB_8> pixel_buffer_t::get_pixel(int x, int y)
 {
     if (x < 0 || x >= width || y < 0 || y >= height)
-        throw std::runtime_error("Pixel out of bounds");
+        return color_t<RGB_8>(0, 0, 0);
 
     int index = (y * width + x) * 3;
     return color_t<RGB_8>(buffer[index], buffer[index + 1], buffer[index + 2]);
@@ -306,6 +306,9 @@ video_buffer_t::video_buffer_t(video_buffer_t &&other)
 
 void video_buffer_t::set_all_frames(const pixel_buffer_t &framebuffer)
 {
+    if (framebuffer.width != width || framebuffer.height != height)
+        return;
+
     for (int i = 0; i < frames; i++)
     {
         std::memcpy(buffer.get() + i * width * height * 3,

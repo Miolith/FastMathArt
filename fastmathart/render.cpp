@@ -407,7 +407,7 @@ void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
 void concat_animation_files(std::string_view filename)
 {
     std::string command =
-        fmt::format("ffmpeg -y -f concat -i concat.txt -c copy {name}",
+        fmt::format("ffmpeg -y -hide_banner -loglevel error -f concat -i concat.txt -c copy {name}",
                     fmt::arg("name", filename));
 
     auto pipe = popen2(command.c_str(), "w");
