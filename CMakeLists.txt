@@ -28,17 +28,19 @@ if(result)
   set_target_properties(test PROPERTIES INTERPROCEDURAL_OPTIMIZATION TRUE)
 endif()
 
-if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE Release)
+if (NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
+  if (NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE "Release" CACHE STRING "" FORCE)
+  endif()
 endif()
 
 if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU" OR CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # using GCC
     set(CMAKE_VERBOSE_MAKEFILE 1)
 
-    set(GCC_COMPILE_OPTIONS "-m64 -fPIC -Wall -Wextra")
-    set(GCC_COMPILE_DEBUG_OPTIONS "${GCC_COMPILE_OPTIONS} -ggdb -O0")
-    set(GCC_COMPILE_RELEASE_OPTIONS "${GCC_COMPILE_OPTIONS} -O3")
+    set(GCC_COMPILE_OPTIONS "-m64;-fPIC;-Wall;-Wextra;-pipe;-fno-plt;-flto=auto;-ffat-lto-objects")
+    set(GCC_COMPILE_DEBUG_OPTIONS "${GCC_COMPILE_OPTIONS};-ggdb;-O0")
+    set(GCC_COMPILE_RELEASE_OPTIONS "${GCC_COMPILE_OPTIONS};-O3")
     target_compile_options(fma PUBLIC "$<$<CONFIG:Debug>:${GCC_COMPILE_DEBUG_OPTIONS}>")
     target_compile_options(fma PUBLIC "$<$<CONFIG:Release>:${GCC_COMPILE_RELEASE_OPTIONS}>")
 
