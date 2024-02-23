@@ -16,10 +16,9 @@ add_library(fma SHARED ${FMA_SRC})
 file(GLOB_RECURSE TEST_SOURCES "tests/*.cpp")
 add_executable(test ${FMA_SRC} ${TEST_SOURCES})
 
-# link to fmt library
 find_package(fmt CONFIG REQUIRED)
-target_link_libraries(fma PRIVATE fmt::fmt-header-only)
-target_link_libraries(test PRIVATE fmt::fmt-header-only)
+target_link_libraries(fma PRIVATE fmt::fmt)
+target_link_libraries(test PRIVATE fmt::fmt)
 
 include(CheckIPOSupported)
 check_ipo_supported(RESULT result)
