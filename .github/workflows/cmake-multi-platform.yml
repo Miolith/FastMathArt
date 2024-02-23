@@ -54,7 +54,7 @@ jobs:
     - name: Install dependencies
       id: install
       run: |
-        conan install . -if build --build=missing
+        conan install . --output-folder build --build=missing
 
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
