@@ -54,6 +54,7 @@ jobs:
     - name: Install dependencies
       id: install
       run: |
+        conan profile detect
         conan install . --output-folder build --build=missing
 
     - name: Set reusable strings
