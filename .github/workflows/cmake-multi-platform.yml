@@ -26,23 +26,30 @@ jobs:
         os: [ubuntu-latest, windows-latest]
         build_type: [Release]
         c_compiler: [gcc, clang, cl]
+        conan_profile: [release, default]
         include:
           - os: windows-latest
             c_compiler: cl
             cpp_compiler: cl
+            conan_profile: default
           - os: ubuntu-latest
             c_compiler: gcc
             cpp_compiler: g++
+            conan_profile: release
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
+            conan_profile: release
         exclude:
           - os: windows-latest
             c_compiler: gcc
+            conan_profile: release
           - os: windows-latest
             c_compiler: clang
+            conan_profile: release
           - os: ubuntu-latest
             c_compiler: cl
+            conan_profile: default
 
     steps:
     - uses: actions/checkout@v4
