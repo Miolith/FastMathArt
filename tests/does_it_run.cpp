@@ -1,4 +1,5 @@
 #include <iostream>
+#include <cstdint>
 #include "../fastmathart/api_bindings.h"
 #include "../fastmathart/render.h"
 
@@ -30,7 +31,7 @@ void morph_animation()
 {
     std::cout << "Entering Morph scene element test" << std::endl;
 
-    u_int8_t rgb[3] = {255, 0, 0};
+    uint8_t rgb[3] = {255, 0, 0};
     auto red = PyAPI::Color {
         .value = rgb,
         .type = PyAPI::ColorType::RGB_3_BYTES

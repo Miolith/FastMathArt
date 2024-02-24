@@ -8,6 +8,8 @@
 #include <memory>
 #include <string>
 #include <string_view>
+#include <numeric>
+#include <numbers>
 
 #include "api_bindings.h"
 #include "math/bezier.h"
@@ -62,7 +64,8 @@ void render_element(PyAPI::Wait *elem, PyAPI::Config &config,
 
 math::fvec3 rotate(math::fvec3 point, float angle)
 {
-    float radians = angle * (M_PI / 180.0);
+    const auto pi = std::numbers::pi;
+    float radians = angle * (pi / 180.0);
     float x = point.x * cos(radians) - point.y * sin(radians);
     float y = point.x * sin(radians) + point.y * cos(radians);
     return math::fvec3(x, y, 0);

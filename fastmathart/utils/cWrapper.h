@@ -2,6 +2,11 @@
 #include <memory>
 #include <iostream>
 
+#if defined(_WIN32) || defined(_WIN64)
+#define popen _popen
+#define pclose _pclose
+#endif
+
 struct PopenDeleter
 {
     void operator()(FILE* p) const
