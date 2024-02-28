@@ -170,6 +170,11 @@ namespace math
             return vec3(u.y * v.z - u.z * v.y, u.z * v.x - u.x * v.z,
                         u.x * v.y - u.y * v.x);
         }
+
+        friend bool almost_eq(const vec3<Number> &u, const vec3<Number> &v, float tolerance = 1e-8)
+        {
+            return std::abs(u.x - v.x) < tolerance && std::abs(u.y - v.y) < tolerance && std::abs(u.z - v.z) < tolerance;
+        }
     };
 
     using fvec3 = vec3<float>;

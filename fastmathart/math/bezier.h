@@ -11,7 +11,7 @@ namespace math
     inline math::fvec3 lerp(const math::fvec3 point1, const math::fvec3 point2,
                             float t)
     {
-        return point1 * t + point2 * (1.0f - t);
+        return point1 * (1.0f - t) + point2 * t;
     }
 
     struct CubicBezier
@@ -66,7 +66,7 @@ namespace math
         }
     };
 
-    void alignPaths(std::vector<CubicBezier> &path1,
+    inline void alignPaths(std::vector<CubicBezier> &path1,
                     std::vector<CubicBezier> &path2)
     {
         auto path1_length = path1.size();
@@ -98,7 +98,7 @@ namespace math
         }
     }
 
-    CubicBezier interpolate(const CubicBezier &path1, const CubicBezier &path2,
+    inline CubicBezier interpolate(const CubicBezier &path1, const CubicBezier &path2,
                             float t)
     {
         return CubicBezier{ lerp(path1.p1, path2.p1, t),
@@ -107,7 +107,7 @@ namespace math
                             lerp(path1.p4, path2.p4, t) };
     }
 
-    std::vector<CubicBezier>
+    inline std::vector<CubicBezier>
     interpolatePaths(const std::vector<CubicBezier> &path1,
                      const std::vector<CubicBezier> &path2, float t)
     {
