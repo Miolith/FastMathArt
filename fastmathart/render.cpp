@@ -62,7 +62,7 @@ void render_element(PyAPI::Wait *elem, PyAPI::Config &config,
                        config.height, frames);
 }
 
-math::fvec3 rotate(math::fvec3 point, float angle)
+constexpr math::fvec3 rotate(math::fvec3 point, float angle)
 {
     using std::numbers::pi;
 
@@ -72,25 +72,41 @@ math::fvec3 rotate(math::fvec3 point, float angle)
     return math::fvec3(x, y, 0);
 }
 
-std::vector<math::CubicBezier> bezier_curve_approx(const PyAPI::Circle &circle)
+constexpr auto unit_circle()
 {
     constexpr float a = 1.00005519;
     constexpr float b = 0.55342686;
     constexpr float c = 0.99873585;
 
-    auto p1 = math::fvec3(0, a, 0) * circle.radius;
-    auto p2 = math::fvec3(b, c, 0) * circle.radius;
-    auto p3 = math::fvec3(c, b, 0) * circle.radius;
-    auto p4 = math::fvec3(a, 0, 0) * circle.radius;
+    return std::array<math::fvec3, 12>{
+        math::fvec3(0, a, 0), math::fvec3(b, c, 0), math::fvec3(c, b, 0),
+        math::fvec3(a, 0, 0), math::fvec3(c, -b, 0), math::fvec3(b, -c, 0),
+        math::fvec3(0, -a, 0), math::fvec3(-b, -c, 0), math::fvec3(-c, -b, 0),
+        math::fvec3(-a, 0, 0), math::fvec3(-c, b, 0), math::fvec3(-b, c, 0)
+    };
+}
+
+auto circle_bezier(float radius)
+{
+    std::array<math::fvec3, 12> p = unit_circle();
+
+    for (auto &point : p)
+        point = point * radius;
+
+    return p;
+}
+
+std::vector<math::CubicBezier> bezier_curve_approx(const PyAPI::Circle &circle)
+{
+
+    auto p = circle_bezier(circle.radius);
 
     std::vector<math::CubicBezier> path(4);
-    path[0] = math::CubicBezier(p1, p2, p3, p4);
-    path[1] = math::CubicBezier(path[0].p4, rotate(p2, -90), rotate(p3, -90),
-                                rotate(p4, -90));
-    path[2] = math::CubicBezier(path[1].p4, rotate(p2, -180.0f),
-                                rotate(p3, -180), rotate(p4, -180));
-    path[3] = math::CubicBezier(path[2].p4, rotate(p2, -270), rotate(p3, -270),
-                                rotate(p4, -270));
+
+    path[0] = math::CubicBezier(p[0], p[1], p[2], p[3]);
+    path[1] = math::CubicBezier(p[3], p[4], p[5], p[6]);
+    path[2] = math::CubicBezier(p[6], p[7], p[8], p[9]);
+    path[3] = math::CubicBezier(p[9], p[10], p[11], p[0]);
 
     return path;
 }

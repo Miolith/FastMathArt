@@ -4,6 +4,7 @@
 #include <iostream>
 #include <memory>
 #include <random>
+#include <fmt/format.h>
 
 namespace math
 {
@@ -26,53 +27,53 @@ namespace math
         static_assert(std::is_arithmetic<Number>::value,
                       "vec3 can only be instantiated with arithmetic types");
 
-        vec3(Number x, Number y, Number z)
+        constexpr vec3(Number x, Number y, Number z)
             : x(x)
             , y(y)
             , z(z)
         {}
 
-        vec3(Number scalar)
+        constexpr vec3(Number scalar)
             : x(scalar)
             , y(scalar)
             , z(scalar)
         {}
 
-        vec3()
+        constexpr vec3()
             : x(0)
             , y(0)
             , z(0)
         {}
 
-        vec3 operator+(vec3 other)
+        constexpr vec3 operator+(vec3 other)
         {
             return vec3(this->x + other.x, this->y + other.y,
                         this->z + other.z);
         }
 
-        vec3 operator-(vec3 other)
+        constexpr vec3 operator-(vec3 other)
         {
             return vec3(this->x - other.x, this->y - other.y,
                         this->z - other.z);
         }
 
-        vec3 operator*(Number scalar)
+        constexpr vec3 operator*(Number scalar)
         {
             return vec3(this->x * scalar, this->y * scalar, this->z * scalar);
         }
 
-        vec3 operator*(vec3 other)
+        constexpr vec3 operator*(vec3 other)
         {
             return vec3(this->x * other.x, this->y * other.y,
                         this->z * other.z);
         }
 
-        vec3 operator-()
+        constexpr vec3 operator-()
         {
             return vec3(-this->x, -this->y, -this->z);
         }
 
-        vec3 operator+(Number scalar)
+        constexpr vec3 operator+(Number scalar)
         {
             return vec3(this->x + scalar, this->y + scalar, this->z + scalar);
         }
@@ -97,19 +98,19 @@ namespace math
             return *this;
         }
 
-        Number length()
+        constexpr Number length()
         {
             return std::sqrt(this->x * this->x + this->y * this->y
                              + this->z * this->z);
         }
 
-        vec3 normalize()
+        constexpr vec3 normalize()
         {
             Number length = this->length();
             return vec3(this->x / length, this->y / length, this->z / length);
         }
 
-        friend std::ostream &operator<<(std::ostream &os, const vec3<Number> v)
+        friend constexpr std::ostream &operator<<(std::ostream &os, const vec3<Number> v)
         {
             os << "vec3(" << v.x << ' ' << v.y << ' ' << v.z << ')';
             return os;
@@ -122,64 +123,90 @@ namespace math
                 .normalize();
         }
 
-        friend vec3<Number> operator+(const vec3<Number> &u,
+        friend constexpr vec3<Number> operator+(const vec3<Number> &u,
                                       const vec3<Number> &v)
         {
             return vec3(u.x + v.x, u.y + v.y, u.z + v.z);
         }
 
-        friend vec3<Number> operator-(const vec3<Number> &u,
+        friend constexpr vec3<Number> operator-(const vec3<Number> &u,
                                       const vec3<Number> &v)
         {
             return vec3(u.x - v.x, u.y - v.y, u.z - v.z);
         }
 
-        friend vec3<Number> operator*(const vec3<Number> &u,
+        friend constexpr vec3<Number> operator*(const vec3<Number> &u,
                                       const vec3<Number> &v)
         {
             return vec3(u.x * v.x, u.y * v.y, u.z * v.z);
         }
 
-        friend vec3<Number> operator*(Number t, const vec3<Number> &v)
+        friend constexpr vec3<Number> operator*(Number t, const vec3<Number> &v)
         {
             return vec3(t * v.x, t * v.y, t * v.z);
         }
 
-        friend vec3<Number> operator/(vec3<Number> v, Number t)
+        friend constexpr vec3<Number> operator/(vec3<Number> v, Number t)
         {
-            return (1 / t) * v;
+            return (static_cast<Number>(1) / t) * v;
         }
 
-        friend vec3<Number> operator+(vec3<Number> v, Number t)
+        friend constexpr vec3<Number> operator+(vec3<Number> v, Number t)
         {
             return vec3(v.x + t, v.y + t, v.z + t);
         }
 
-        friend vec3<Number> operator-(const vec3<Number> &v)
+        friend constexpr vec3<Number> operator-(const vec3<Number> &v)
         {
             return vec3(-v.x, -v.y, -v.z);
         }
 
-        friend Number dot(const vec3<Number> &u, const vec3<Number> &v)
+        friend constexpr Number dot(const vec3<Number> &u, const vec3<Number> &v)
         {
             return u.x * v.x + u.y * v.y + u.z * v.z;
         }
 
-        friend vec3<Number> cross(const vec3<Number> &u, const vec3<Number> &v)
+        friend constexpr vec3<Number> cross(const vec3<Number> &u, const vec3<Number> &v)
         {
             return vec3(u.y * v.z - u.z * v.y, u.z * v.x - u.x * v.z,
                         u.x * v.y - u.y * v.x);
         }
 
-        friend bool almost_eq(const vec3<Number> &u, const vec3<Number> &v,
+        friend constexpr bool almost_eq(const vec3<Number> &u, const vec3<Number> &v,
                               float tolerance = 1e-8)
         {
             return std::abs(u.x - v.x) < tolerance
                 && std::abs(u.y - v.y) < tolerance
                 && std::abs(u.z - v.z) < tolerance;
         }
+
+        friend constexpr bool operator==(const vec3<Number> &u, const vec3<Number> &v)
+        {
+            return u.x == v.x && u.y == v.y && u.z == v.z;
+        }
+
+        friend constexpr bool operator!=(const vec3<Number> &u, const vec3<Number> &v)
+        {
+            return !(u == v);
+        }
+
+
     };
 
     using fvec3 = vec3<float>;
 
 } // namespace math
+
+
+// Allow fmt to format and print vec3 objects
+template <>
+template <typename Number>
+struct fmt::formatter<math::vec3<Number>> : nested_formatter<Number>
+{
+    auto format(math::vec3<Number> v, format_context& ctx) const
+    {
+        return write_padded(ctx, [=](auto out) {
+            return format_to(out, "vec3({}, {}, {})", nested(v.x), nested(v.y), nested(v.z));
+        });
+    }
+};

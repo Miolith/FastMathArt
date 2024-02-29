@@ -14,4 +14,6 @@ TEST_CASE("Bezier curve")
                        { 3.0f, 0.0f, 0.0f } };
 
     CHECK(almost_eq(curve.valueAt(0.0f), fvec3(0.0f, 0.0f, 0.0f)));
+    CHECK(almost_eq(curve.valueAt(1.0f), fvec3(3.0f, 0.0f, 0.0f)));
+    CHECK(almost_eq(curve.valueAt(0.5f), fvec3(1.5f, 0.75f, 0.0f)));
 }

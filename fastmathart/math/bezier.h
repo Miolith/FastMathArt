@@ -8,7 +8,7 @@
 namespace math
 {
 
-    inline math::fvec3 lerp(const math::fvec3 point1, const math::fvec3 point2,
+    constexpr inline math::fvec3 lerp(const math::fvec3 point1, const math::fvec3 point2,
                             float t)
     {
         return point1 * (1.0f - t) + point2 * t;
@@ -21,7 +21,7 @@ namespace math
         math::fvec3 p3;
         math::fvec3 p4;
 
-        CubicBezier(math::fvec3 p1, math::fvec3 p2, math::fvec3 p3,
+        constexpr CubicBezier(math::fvec3 p1, math::fvec3 p2, math::fvec3 p3,
                     math::fvec3 p4)
             : p1(p1)
             , p2(p2)
@@ -31,14 +31,14 @@ namespace math
 
         CubicBezier() = default;
 
-        math::fvec3 valueAt(float t) const
+        constexpr math::fvec3 valueAt(const float t) const
         {
             auto p2_p3 = lerp(p2, p3, t);
             return lerp(lerp(lerp(p1, p2, t), p2_p3, t),
                         lerp(p2_p3, lerp(p3, p4, t), t), t);
         }
 
-        std::pair<CubicBezier, CubicBezier> split(float t)
+        constexpr std::pair<CubicBezier, CubicBezier> split(const float t)
         {
             auto p12 = lerp(p1, p2, t);
             auto p23 = lerp(p2, p3, t);
@@ -50,7 +50,7 @@ namespace math
                                   CubicBezier{ p1234, p234, p34, p4 });
         }
 
-        float length(int precision = 15) const
+        constexpr float length(int precision = 15) const
         {
             float length = 0.0f;
             auto prev = valueAt(0.0f);
@@ -63,7 +63,7 @@ namespace math
             return length;
         }
 
-        static CubicBezier straightLine(const math::fvec3 &p1,
+        static constexpr CubicBezier straightLine(const math::fvec3 &p1,
                                         const math::fvec3 &p2)
         {
             return CubicBezier{ p1, p1, p2, p2 };
