@@ -109,7 +109,7 @@ namespace math
             return vec3(this->x / length, this->y / length, this->z / length);
         }
 
-        friend std::ostream &operator<<(std::ostream &os, vec3<Number> &v)
+        friend std::ostream &operator<<(std::ostream &os, const vec3<Number> v)
         {
             os << "vec3(" << v.x << ' ' << v.y << ' ' << v.z << ')';
             return os;

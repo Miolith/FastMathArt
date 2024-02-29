@@ -64,14 +64,15 @@ void render_element(PyAPI::Wait *elem, PyAPI::Config &config,
 
 math::fvec3 rotate(math::fvec3 point, float angle)
 {
-    const auto pi = std::numbers::pi;
+    using std::numbers::pi;
+
     float radians = angle * (pi / 180.0);
     float x = point.x * cos(radians) - point.y * sin(radians);
     float y = point.x * sin(radians) + point.y * cos(radians);
     return math::fvec3(x, y, 0);
 }
 
-std::vector<math::CubicBezier> bezier_curve_approx(PyAPI::Circle &circle)
+std::vector<math::CubicBezier> bezier_curve_approx(const PyAPI::Circle &circle)
 {
     constexpr float a = 1.00005519;
     constexpr float b = 0.55342686;
@@ -84,21 +85,19 @@ std::vector<math::CubicBezier> bezier_curve_approx(PyAPI::Circle &circle)
 
     std::vector<math::CubicBezier> path(4);
     path[0] = math::CubicBezier(p1, p2, p3, p4);
-    path[1] = math::CubicBezier(rotate(p1, 90), rotate(p2, 90), rotate(p3, 90),
-                                rotate(p4, 90));
-    path[2] = math::CubicBezier(rotate(p1, 180), rotate(p2, 180),
-                                rotate(p3, 180), rotate(p4, 180));
-    path[3] = math::CubicBezier(rotate(p1, 270), rotate(p2, 270),
-                                rotate(p3, 270), rotate(p4, 270));
+    path[1] = math::CubicBezier(path[0].p4, rotate(p2, -90), rotate(p3, -90), rotate(p4, -90));
+    path[2] = math::CubicBezier(path[1].p4, rotate(p2, -180.0f), rotate(p3, -180), rotate(p4, -180));
+    path[3] = math::CubicBezier(path[2].p4, rotate(p2, -270), rotate(p3, -270), rotate(p4, -270));
 
     return path;
 }
 
-math::vec3<int> ndc_to_raster_space(math::fvec3 point, int width, int height)
+math::vec3<int> ndc_to_raster_space(math::fvec3 point, const int width, const int height)
 {
-    return math::vec3<int>((point.x + float(width) / float(height)) * height
+    const float screen_ratio = float(width) / float(height);
+    return math::vec3<int>((point.x + screen_ratio) * height
                                / 2.0f,
-                           (point.y + 1.0f) * height / 2.0f, 0);
+                           (-point.y + 1.0f) * height / 2.0f, 0);
 }
 
 int ndc_to_raster_space(float quantity, int width, int height)
@@ -138,7 +137,7 @@ void render_line(math::fvec3 point1, math::fvec3 point2,
         ndc_to_raster_space(point1, frame_cache.width, frame_cache.height);
     math::vec3<int> p2 =
         ndc_to_raster_space(point2, frame_cache.width, frame_cache.height);
-
+    
     int dx = std::abs(p2.x - p1.x);
     int dy = std::abs(p2.y - p1.y);
     int sx = (p1.x < p2.x) ? 1 : -1;
@@ -213,10 +212,10 @@ std::vector<math::CubicBezier> bezier_curve_approx(PyAPI::Rectangle &rect)
     auto lower_left =
         center + math::fvec3(-rect.width / 2, -rect.height / 2, 0);
 
-    beziers[0] = math::CubicBezier::straightLine(upper_right, upper_left);
-    beziers[1] = math::CubicBezier::straightLine(lower_right, upper_right);
-    beziers[2] = math::CubicBezier::straightLine(lower_left, lower_right);
-    beziers[3] = math::CubicBezier::straightLine(upper_left, lower_left);
+    beziers[0] = math::CubicBezier::straightLine(upper_left, upper_right);
+    beziers[1] = math::CubicBezier::straightLine(upper_right, lower_right);
+    beziers[2] = math::CubicBezier::straightLine(lower_right, lower_left);
+    beziers[3] = math::CubicBezier::straightLine(lower_left, upper_left);
 
     return beziers;
 }
@@ -266,6 +265,7 @@ void draw_path(std::vector<math::CubicBezier> &beziers,
     const int total_frames = video.frames;
     int current_frame = 0;
     math::fvec3 point1 = beziers[0].valueAt(0);
+    std::cout << point1 << "\n";
 
     const int steps_per_bezier = 100;
     const float draw_per_frame = 1.0 / (total_frames - 1);
@@ -295,12 +295,6 @@ void draw_path(std::vector<math::CubicBezier> &beziers,
             if (accumulated_length - draw_per_frame * (current_frame + 1.0f)
                 >= -0.01f)
             {
-                std::cout << "Frame " << current_frame << "/" << total_frames - 1
-                          << "\n";
-                std::cout << "accumulated_length: " << accumulated_length
-                          << " easing: " << ease_in_out_cubic(draw_per_frame * (current_frame + 1.0f))
-                          << " minus: " << accumulated_length - ease_in_out_cubic(draw_per_frame * (current_frame + 1.0f))
-                            << "\n";
                 video.set_frame(frame_cache, current_frame);
                 current_frame++;
             }
@@ -386,8 +380,8 @@ void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
 
     for (int i = 0; i < frames; i++)
     {
-        float t = 1.0f - float(i) / float(frames - 1);
-        auto color = src_color * t + dest_color * (1.0f - t);
+        float t = float(i) / float(frames - 1);
+        auto color = blend(src_color, dest_color, t);
 
         float color_values[3] = { color.x, color.y, color.z };
         props.color->value = color_values;
