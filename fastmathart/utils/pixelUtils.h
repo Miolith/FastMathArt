@@ -13,7 +13,8 @@ enum pixel_format
 };
 
 template <pixel_format F>
-struct _color_implem {};
+struct _color_implem
+{};
 
 template <pixel_format F>
 struct color_t : _color_implem<F>
@@ -22,8 +23,10 @@ struct color_t : _color_implem<F>
     using type_y = decltype(_color_implem<F>::y);
     using type_z = decltype(_color_implem<F>::z);
 
-    color_t(type_x x, type_y y, type_z z) : _color_implem<F>(x, y, z) {}
-    
+    color_t(type_x x, type_y y, type_z z)
+        : _color_implem<F>(x, y, z)
+    {}
+
     friend color_t<F> operator+(const color_t<F> &lhs, const color_t<F> &rhs)
     {
         return color_t<F>(lhs.x + rhs.x, lhs.y + rhs.y, lhs.z + rhs.z);
@@ -41,7 +44,9 @@ struct color_t : _color_implem<F>
 
     friend color_t<F> blend(const color_t<F> &a, const color_t<F> &b, float t)
     {
-        return color_t<F>(a.x * (1.0f - t) + b.x * t, a.y * (1.0f - t) + b.y * t, a.z * (1.0f - t) + b.z * t);
+        return color_t<F>(a.x * (1.0f - t) + b.x * t,
+                          a.y * (1.0f - t) + b.y * t,
+                          a.z * (1.0f - t) + b.z * t);
     }
 
     friend color_t<F> operator*(const color_t<F> &lhs, float rhs)
@@ -49,8 +54,6 @@ struct color_t : _color_implem<F>
         return color_t<F>(lhs.x * rhs, lhs.y * rhs, lhs.z * rhs);
     }
 };
-
-
 
 template <>
 struct _color_implem<Oklab>

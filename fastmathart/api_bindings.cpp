@@ -1,6 +1,7 @@
+#include "api_bindings.h"
+
 #include <iostream>
 
-#include "api_bindings.h"
 #include "render.h"
 
 extern "C"

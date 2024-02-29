@@ -6,10 +6,10 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <numbers>
+#include <numeric>
 #include <string>
 #include <string_view>
-#include <numeric>
-#include <numbers>
 
 #include "api_bindings.h"
 #include "math/bezier.h"
@@ -85,18 +85,21 @@ std::vector<math::CubicBezier> bezier_curve_approx(const PyAPI::Circle &circle)
 
     std::vector<math::CubicBezier> path(4);
     path[0] = math::CubicBezier(p1, p2, p3, p4);
-    path[1] = math::CubicBezier(path[0].p4, rotate(p2, -90), rotate(p3, -90), rotate(p4, -90));
-    path[2] = math::CubicBezier(path[1].p4, rotate(p2, -180.0f), rotate(p3, -180), rotate(p4, -180));
-    path[3] = math::CubicBezier(path[2].p4, rotate(p2, -270), rotate(p3, -270), rotate(p4, -270));
+    path[1] = math::CubicBezier(path[0].p4, rotate(p2, -90), rotate(p3, -90),
+                                rotate(p4, -90));
+    path[2] = math::CubicBezier(path[1].p4, rotate(p2, -180.0f),
+                                rotate(p3, -180), rotate(p4, -180));
+    path[3] = math::CubicBezier(path[2].p4, rotate(p2, -270), rotate(p3, -270),
+                                rotate(p4, -270));
 
     return path;
 }
 
-math::vec3<int> ndc_to_raster_space(math::fvec3 point, const int width, const int height)
+math::vec3<int> ndc_to_raster_space(math::fvec3 point, const int width,
+                                    const int height)
 {
     const float screen_ratio = float(width) / float(height);
-    return math::vec3<int>((point.x + screen_ratio) * height
-                               / 2.0f,
+    return math::vec3<int>((point.x + screen_ratio) * height / 2.0f,
                            (-point.y + 1.0f) * height / 2.0f, 0);
 }
 
@@ -137,7 +140,7 @@ void render_line(math::fvec3 point1, math::fvec3 point2,
         ndc_to_raster_space(point1, frame_cache.width, frame_cache.height);
     math::vec3<int> p2 =
         ndc_to_raster_space(point2, frame_cache.width, frame_cache.height);
-    
+
     int dx = std::abs(p2.x - p1.x);
     int dy = std::abs(p2.y - p1.y);
     int sx = (p1.x < p2.x) ? 1 : -1;
@@ -271,12 +274,11 @@ void draw_path(std::vector<math::CubicBezier> &beziers,
     const float draw_per_frame = 1.0 / (total_frames - 1);
 
     float accumulated_length = 0.0f;
-    const float total_length = std::accumulate(
-        beziers.begin(), beziers.end(), 0.0f,
-        [=](float acc, math::CubicBezier &bezier) {
-            return acc + bezier.length(steps_per_bezier);
-        }
-    );
+    const float total_length =
+        std::accumulate(beziers.begin(), beziers.end(), 0.0f,
+                        [=](float acc, math::CubicBezier &bezier) {
+                            return acc + bezier.length(steps_per_bezier);
+                        });
     const float length_ratio = 1.0f / total_length;
 
     for (auto &bezier : beziers)
@@ -403,9 +405,9 @@ void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
 
 void concat_animation_files(std::string_view filename)
 {
-    std::string command =
-        fmt::format("ffmpeg -y -hide_banner -loglevel error -f concat -i concat.txt -c copy {name}",
-                    fmt::arg("name", filename));
+    std::string command = fmt::format("ffmpeg -y -hide_banner -loglevel error "
+                                      "-f concat -i concat.txt -c copy {name}",
+                                      fmt::arg("name", filename));
 
     auto pipe = popen2(command.c_str(), "w");
 }

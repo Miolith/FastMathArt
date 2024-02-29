@@ -171,9 +171,12 @@ namespace math
                         u.x * v.y - u.y * v.x);
         }
 
-        friend bool almost_eq(const vec3<Number> &u, const vec3<Number> &v, float tolerance = 1e-8)
+        friend bool almost_eq(const vec3<Number> &u, const vec3<Number> &v,
+                              float tolerance = 1e-8)
         {
-            return std::abs(u.x - v.x) < tolerance && std::abs(u.y - v.y) < tolerance && std::abs(u.z - v.z) < tolerance;
+            return std::abs(u.x - v.x) < tolerance
+                && std::abs(u.y - v.y) < tolerance
+                && std::abs(u.z - v.z) < tolerance;
         }
     };
 

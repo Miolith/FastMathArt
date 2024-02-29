@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <cstring>
 
-
 /*
 ======================================
 Oklab 32bits float per channel, member functions

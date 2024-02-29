@@ -1,7 +1,7 @@
 #pragma once
 
-#include <string>
 #include <iostream>
+#include <string>
 
 namespace PyAPI
 {
@@ -65,7 +65,7 @@ namespace PyAPI
     };
 
     template <class F>
-    inline constexpr void element_visitor(F&& lambda, SceneElement *elem)
+    inline constexpr void element_visitor(F &&lambda, SceneElement *elem)
     {
         switch (elem->type)
         {
@@ -122,7 +122,7 @@ namespace PyAPI
     };
 
     template <class F>
-    inline constexpr void shape_visitor(F&& lambda, void *shape, ShapeType type)
+    inline constexpr void shape_visitor(F &&lambda, void *shape, ShapeType type)
     {
         switch (type)
         {

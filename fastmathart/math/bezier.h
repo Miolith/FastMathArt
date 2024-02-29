@@ -21,10 +21,14 @@ namespace math
         math::fvec3 p3;
         math::fvec3 p4;
 
-        CubicBezier(math::fvec3 p1, math::fvec3 p2,
-                    math::fvec3 p3, math::fvec3 p4)
-            : p1(p1), p2(p2), p3(p3), p4(p4) {}
-        
+        CubicBezier(math::fvec3 p1, math::fvec3 p2, math::fvec3 p3,
+                    math::fvec3 p4)
+            : p1(p1)
+            , p2(p2)
+            , p3(p3)
+            , p4(p4)
+        {}
+
         CubicBezier() = default;
 
         math::fvec3 valueAt(float t) const
@@ -67,7 +71,7 @@ namespace math
     };
 
     inline void alignPaths(std::vector<CubicBezier> &path1,
-                    std::vector<CubicBezier> &path2)
+                           std::vector<CubicBezier> &path2)
     {
         auto path1_length = path1.size();
         auto path2_length = path2.size();
@@ -98,8 +102,8 @@ namespace math
         }
     }
 
-    inline CubicBezier interpolate(const CubicBezier &path1, const CubicBezier &path2,
-                            float t)
+    inline CubicBezier interpolate(const CubicBezier &path1,
+                                   const CubicBezier &path2, float t)
     {
         return CubicBezier{ lerp(path1.p1, path2.p1, t),
                             lerp(path1.p2, path2.p2, t),
