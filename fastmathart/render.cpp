@@ -6,7 +6,6 @@
 #include <functional>
 #include <iostream>
 #include <memory>
-#include <numbers>
 #include <numeric>
 #include <string>
 #include <string_view>
@@ -62,43 +61,9 @@ void render_element(PyAPI::Wait *elem, PyAPI::Config &config,
                        config.height, frames);
 }
 
-constexpr math::fvec3 rotate(math::fvec3 point, float angle)
-{
-    using std::numbers::pi;
-
-    float radians = angle * (pi / 180.0);
-    float x = point.x * cos(radians) - point.y * sin(radians);
-    float y = point.x * sin(radians) + point.y * cos(radians);
-    return math::fvec3(x, y, 0);
-}
-
-constexpr auto unit_circle()
-{
-    constexpr float a = 1.00005519;
-    constexpr float b = 0.55342686;
-    constexpr float c = 0.99873585;
-
-    return std::array<math::fvec3, 12>{
-        math::fvec3(0, a, 0),  math::fvec3(b, c, 0),   math::fvec3(c, b, 0),
-        math::fvec3(a, 0, 0),  math::fvec3(c, -b, 0),  math::fvec3(b, -c, 0),
-        math::fvec3(0, -a, 0), math::fvec3(-b, -c, 0), math::fvec3(-c, -b, 0),
-        math::fvec3(-a, 0, 0), math::fvec3(-c, b, 0),  math::fvec3(-b, c, 0)
-    };
-}
-
-auto circle_bezier(float radius)
-{
-    std::array<math::fvec3, 12> p = unit_circle();
-
-    for (auto &point : p)
-        point = point * radius;
-
-    return p;
-}
-
 math::BezierPath bezier_curve_approx(const PyAPI::Circle &circle)
 {
-    auto p = circle_bezier(circle.radius);
+    auto p = math::circle_bezier(circle.radius);
 
     std::vector<math::CubicBezier> path(4);
 
@@ -113,14 +78,18 @@ math::BezierPath bezier_curve_approx(const PyAPI::Circle &circle)
 math::vec3<int> ndc_to_raster_space(math::fvec3 point, const int width,
                                     const int height)
 {
-    const float screen_ratio = float(width) / float(height);
-    return math::vec3<int>((point.x + screen_ratio) * height / 2.0f,
-                           (-point.y + 1.0f) * height / 2.0f, 0);
+    int bigger_dimension = std::max(width, height);
+    int smaller_dimension = std::min(width, height);
+
+    const float screen_ratio = float(bigger_dimension) / float(smaller_dimension);
+
+    return math::vec3<int>((point.x + screen_ratio) * smaller_dimension / 2.0f,
+                           (-point.y + 1.0f) * smaller_dimension / 2.0f, 0);
 }
 
 int ndc_to_raster_space(float quantity, int width, int height)
 {
-    return (quantity)*std::min(height, width);
+    return quantity * std::min(height, width);
 }
 
 void render_disk(math::vec3<int> center, int radius,

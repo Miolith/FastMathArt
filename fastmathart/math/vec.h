@@ -5,6 +5,7 @@
 #include <iostream>
 #include <memory>
 #include <random>
+#include <numbers>
 
 namespace math
 {
@@ -194,6 +195,16 @@ namespace math
                                          const vec3<Number> &v)
         {
             return !(u == v);
+        }
+
+        constexpr vec3<Number> rotate(float angle)
+        {
+            using std::numbers::pi;
+
+            float radians = angle * (pi / 180.0);
+            float x = x * cos(radians) - y * sin(radians);
+            float y = x * sin(radians) + y * cos(radians);
+            return vec3<Number>(x, y, 0);
         }
     };
 

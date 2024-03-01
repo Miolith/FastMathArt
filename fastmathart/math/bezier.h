@@ -70,10 +70,12 @@ namespace math
         }
     };
 
-    struct BezierPath
+    class BezierPath
     {
+        private:
         std::vector<CubicBezier> curves;
 
+        public:
         BezierPath(std::vector<CubicBezier> curves)
             : curves(curves)
         { }
@@ -191,6 +193,30 @@ namespace math
             result.push_back(interpolate(path1[i], path2[i], t));
         }
         return result;
+    }
+
+    inline constexpr auto unit_circle()
+    {
+        constexpr float a = 1.00005519;
+        constexpr float b = 0.55342686;
+        constexpr float c = 0.99873585;
+
+        return std::array<fvec3, 12>{
+            fvec3(0, a, 0),  fvec3(b, c, 0),   fvec3(c, b, 0),
+            fvec3(a, 0, 0),  fvec3(c, -b, 0),  fvec3(b, -c, 0),
+            fvec3(0, -a, 0), fvec3(-b, -c, 0), fvec3(-c, -b, 0),
+            fvec3(-a, 0, 0), fvec3(-c, b, 0),  fvec3(-b, c, 0)
+        };
+    }
+
+    inline std::array<fvec3, 12> circle_bezier(float radius)
+    {
+        std::array<fvec3, 12> p = unit_circle();
+
+        for (auto &point : p)
+            point = point * radius;
+
+        return p;
     }
 
 } // namespace math
