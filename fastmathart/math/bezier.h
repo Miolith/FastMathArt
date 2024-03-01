@@ -152,9 +152,10 @@ namespace math
     {
         auto path1_length = path1.size();
         auto path2_length = path2.size();
-        if (path1_length > path2_length)
+
+        if (path1_length < path2_length)
         {
-            int diff = path1_length - path2_length;
+            int diff = path2_length - path1_length;
 
             // split the bezier curves at the longest segments
             // until the path lengths are equal
@@ -164,7 +165,7 @@ namespace math
                 path1.splitAt(longest_bezier, 0.5f);
             }
         }
-        else if (path2_length > path1_length)
+        else if (path1_length > path2_length)
         {
             alignPaths(path2, path1);
         }
