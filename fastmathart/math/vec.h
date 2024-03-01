@@ -31,19 +31,19 @@ namespace math
             : x(x)
             , y(y)
             , z(z)
-        {}
+        { }
 
         constexpr vec3(Number scalar)
             : x(scalar)
             , y(scalar)
             , z(scalar)
-        {}
+        { }
 
         constexpr vec3()
             : x(0)
             , y(0)
             , z(0)
-        {}
+        { }
 
         constexpr vec3 operator+(vec3 other)
         {

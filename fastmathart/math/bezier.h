@@ -27,7 +27,7 @@ namespace math
             , p2(p2)
             , p3(p3)
             , p4(p4)
-        {}
+        { }
 
         CubicBezier() = default;
 
@@ -76,7 +76,7 @@ namespace math
 
         BezierPath(std::vector<CubicBezier> curves)
             : curves(curves)
-        {}
+        { }
 
         BezierPath() = default;
 

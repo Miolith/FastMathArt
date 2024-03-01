@@ -69,16 +69,11 @@ namespace PyAPI
     {
         switch (elem->type)
         {
-        case WAIT:
-            return lambda(static_cast<Wait *>(elem->elem));
-        case PLACE:
-            return lambda(static_cast<Place *>(elem->elem));
-        case DRAW:
-            return lambda(static_cast<Draw *>(elem->elem));
-        case MORPH:
-            return lambda(static_cast<Morph *>(elem->elem));
-        default:
-            std::cout << "Unknown element type\n";
+        case WAIT: return lambda(static_cast<Wait *>(elem->elem));
+        case PLACE: return lambda(static_cast<Place *>(elem->elem));
+        case DRAW: return lambda(static_cast<Draw *>(elem->elem));
+        case MORPH: return lambda(static_cast<Morph *>(elem->elem));
+        default: std::cout << "Unknown element type\n";
         }
     }
 
@@ -126,12 +121,9 @@ namespace PyAPI
     {
         switch (type)
         {
-        case CIRCLE:
-            return lambda(static_cast<Circle *>(shape));
-        case RECTANGLE:
-            return lambda(static_cast<Rectangle *>(shape));
-        default:
-            std::cout << "Unknown shape type\n";
+        case CIRCLE: return lambda(static_cast<Circle *>(shape));
+        case RECTANGLE: return lambda(static_cast<Rectangle *>(shape));
+        default: std::cout << "Unknown shape type\n";
         }
     }
 

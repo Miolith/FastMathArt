@@ -13,7 +13,7 @@ _color_implem<Oklab>::_color_implem(float _l, float _a, float _b)
     : l(_l)
     , a(_a)
     , b(_b)
-{}
+{ }
 
 /*
 ======================================
@@ -25,7 +25,7 @@ _color_implem<RGB_8>::_color_implem(uint8_t _r, uint8_t _g, uint8_t _b)
     : r(_r)
     , g(_g)
     , b(_b)
-{}
+{ }
 
 color_t<Oklab> _color_implem<RGB_8>::toOklab()
 {
@@ -75,7 +75,7 @@ _color_implem<RGB_f32>::_color_implem(float _r, float _g, float _b)
     : r(_r)
     , g(_g)
     , b(_b)
-{}
+{ }
 
 color_t<RGB_8> _color_implem<RGB_f32>::toRGB_8()
 {
@@ -132,7 +132,7 @@ _color_implem<LinearRGB_8>::_color_implem(uint8_t _r, uint8_t _g, uint8_t _b)
     : r(_r)
     , g(_g)
     , b(_b)
-{}
+{ }
 
 color_t<RGB_8> _color_implem<LinearRGB_8>::toRGB_8()
 {
@@ -174,7 +174,7 @@ _color_implem<LinearRGB_f32>::_color_implem(float _r, float _g, float _b)
     : r(_r)
     , g(_g)
     , b(_b)
-{}
+{ }
 
 color_t<RGB_8> _color_implem<LinearRGB_f32>::toRGB_8()
 {
@@ -256,7 +256,7 @@ pixel_buffer_t::pixel_buffer_t(pixel_buffer_t &&other)
     : buffer(std::move(other.buffer))
     , width(other.width)
     , height(other.height)
-{}
+{ }
 
 void pixel_buffer_t::set_pixel(int x, int y, const color_t<RGB_8> &color)
 {
@@ -301,7 +301,7 @@ video_buffer_t::video_buffer_t(video_buffer_t &&other)
     , width(other.width)
     , height(other.height)
     , frames(other.frames)
-{}
+{ }
 
 void video_buffer_t::set_all_frames(const pixel_buffer_t &framebuffer)
 {

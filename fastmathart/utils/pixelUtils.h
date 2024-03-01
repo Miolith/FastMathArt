@@ -14,7 +14,7 @@ enum pixel_format
 
 template <pixel_format F>
 struct _color_implem
-{};
+{ };
 
 template <pixel_format F>
 struct color_t : _color_implem<F>
@@ -25,7 +25,7 @@ struct color_t : _color_implem<F>
 
     color_t(type_x x, type_y y, type_z z)
         : _color_implem<F>(x, y, z)
-    {}
+    { }
 
     friend color_t<F> operator+(const color_t<F> &lhs, const color_t<F> &rhs)
     {
