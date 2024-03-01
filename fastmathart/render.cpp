@@ -304,6 +304,32 @@ void draw_shape(PyAPI::Rectangle &rect, pixel_buffer_t &frame_cache,
     draw_path(beziers, frame_cache, video, *rect.properties);
 }
 
+math::BezierPath bezier_curve_approx(PyAPI::Polyline &polyline)
+{
+    std::vector<math::CubicBezier> beziers;
+    for (int i = 0; i < polyline.point_count - 1; i++)
+    {
+        auto p1 = math::fvec3(polyline.x[i], polyline.y[i], 0);
+        auto p2 = math::fvec3(polyline.x[i + 1], polyline.y[i + 1], 0);
+        beziers.push_back(math::CubicBezier::straightLine(p1, p2));
+    }
+    return math::BezierPath(beziers);
+}
+
+void draw_shape(PyAPI::Polyline &polyline, pixel_buffer_t &frame_cache,
+                video_buffer_t &video)
+{
+    auto beziers = bezier_curve_approx(polyline);
+    draw_path(beziers, frame_cache, video, *polyline.properties);
+}
+
+void place_shape(PyAPI::Polyline &polyline, pixel_buffer_t &frame_cache)
+{
+    auto beziers = bezier_curve_approx(polyline);
+    for (auto &bez : beziers)
+        place_cubic_bezier(bez, frame_cache, *polyline.properties);
+}
+
 void render_element(PyAPI::Draw *elem, PyAPI::Config &config,
                     pixel_buffer_t &frame_cache)
 {

@@ -25,7 +25,8 @@ namespace PyAPI
     {
         NO_TYPE = 0,
         CIRCLE = 1,
-        RECTANGLE = 2
+        RECTANGLE = 2,
+        POLYLINES = 3
     };
 
     struct SceneElement
@@ -116,6 +117,14 @@ namespace PyAPI
         Properties *properties;
     };
 
+    struct Polyline
+    {
+        float *x;
+        float *y;
+        int point_count;
+        Properties *properties;
+    };
+
     template <class F>
     inline constexpr void shape_visitor(F &&lambda, void *shape, ShapeType type)
     {
@@ -123,6 +132,7 @@ namespace PyAPI
         {
         case CIRCLE: return lambda(static_cast<Circle *>(shape));
         case RECTANGLE: return lambda(static_cast<Rectangle *>(shape));
+        case POLYLINES: return lambda(static_cast<Polyline *>(shape));
         default: std::cout << "Unknown shape type\n";
         }
     }

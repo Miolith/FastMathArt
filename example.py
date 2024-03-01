@@ -25,10 +25,21 @@ rect = Rectangle(
     )
 )
 
+star = Star(
+    radius=0.5,
+    spikes=5,
+    properties=Properties(
+        thickness=0.01,
+        color=rgb(0.1, 0.8, 0.6),
+        fill=None,
+        position=CENTER
+    )
+)
+
 scene.append(
-    Draw(circle, seconds=2.0),
+    Draw(star, seconds=2.0),
     Wait(seconds=0.5),
-    Morph(circle, rect, seconds=2.0),
+    Morph(star, rect, seconds=2.0),
     Wait(seconds=0.5)
 )
 
