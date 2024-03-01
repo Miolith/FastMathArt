@@ -8,8 +8,8 @@
 namespace math
 {
 
-    constexpr inline math::fvec3 lerp(const math::fvec3 point1, const math::fvec3 point2,
-                            float t)
+    constexpr inline math::fvec3 lerp(const math::fvec3 point1,
+                                      const math::fvec3 point2, float t)
     {
         return point1 * (1.0f - t) + point2 * t;
     }
@@ -22,7 +22,7 @@ namespace math
         math::fvec3 p4;
 
         constexpr CubicBezier(math::fvec3 p1, math::fvec3 p2, math::fvec3 p3,
-                    math::fvec3 p4)
+                              math::fvec3 p4)
             : p1(p1)
             , p2(p2)
             , p3(p3)
@@ -64,14 +64,89 @@ namespace math
         }
 
         static constexpr CubicBezier straightLine(const math::fvec3 &p1,
-                                        const math::fvec3 &p2)
+                                                  const math::fvec3 &p2)
         {
             return CubicBezier{ p1, p1, p2, p2 };
         }
     };
 
-    inline void alignPaths(std::vector<CubicBezier> &path1,
-                           std::vector<CubicBezier> &path2)
+    struct BezierPath
+    {
+        std::vector<CubicBezier> curves;
+
+        BezierPath(std::vector<CubicBezier> curves)
+            : curves(curves)
+        {}
+
+        BezierPath() = default;
+
+        constexpr math::fvec3 valueAt(const float t) const
+        {
+            auto curve_index = static_cast<int>(t * curves.size());
+            auto curve_t = (t * curves.size()) - curve_index;
+            return curves[curve_index].valueAt(curve_t);
+        }
+
+        constexpr float length(int precision = 15) const
+        {
+            float length = 0.0f;
+            for (auto &curve : curves)
+            {
+                length += curve.length(precision);
+            }
+            return length;
+        }
+
+        constexpr void addCurve(const CubicBezier &curve)
+        {
+            curves.push_back(curve);
+        }
+
+        constexpr std::size_t size() const
+        {
+            return curves.size();
+        }
+
+        constexpr CubicBezier &operator[](std::size_t index)
+        {
+            return curves[index];
+        }
+
+        constexpr const CubicBezier &operator[](std::size_t index) const
+        {
+            return curves[index];
+        }
+
+        constexpr auto longest_curve() const
+        {
+            return std::distance(curves.begin(),
+                                 std::max_element(curves.begin(), curves.end(),
+                                                  [](const CubicBezier &a,
+                                                     const CubicBezier &b) {
+                                                      return a.length()
+                                                          < b.length();
+                                                  }));
+        }
+
+        void splitAt(int index, float t)
+        {
+            auto [left_half, right_half] = curves[index].split(t);
+            curves[index] = left_half;
+            curves.insert(curves.begin() + index + 1, right_half);
+        }
+
+        auto begin()
+        {
+            return curves.begin();
+        }
+
+        auto end()
+        {
+            return curves.end();
+        }
+    };
+
+    inline void alignPaths(BezierPath &path1, BezierPath &path2)
     {
         auto path1_length = path1.size();
         auto path2_length = path2.size();
@@ -83,17 +158,8 @@ namespace math
             // until the path lengths are equal
             for (int i = 0; i < diff; i++)
             {
-                auto longest_bezier = std::max_element(
-                    path1.begin(), path1.end(),
-                    [](const CubicBezier &a, const CubicBezier &b) {
-                        return a.length() < b.length();
-                    });
-                auto index = std::distance(path1.begin(), longest_bezier);
-
-                auto [left_half, right_half] = longest_bezier->split(0.5f);
-
-                path1[index] = left_half;
-                path1.insert(path1.begin() + index + 1, right_half);
+                auto longest_bezier = path1.longest_curve();
+                path1.splitAt(longest_bezier, 0.5f);
             }
         }
         else if (path2_length > path1_length)
@@ -102,8 +168,8 @@ namespace math
         }
     }
 
-    inline CubicBezier interpolate(const CubicBezier &path1,
-                                   const CubicBezier &path2, float t)
+    inline CubicBezier interpolate(const CubicBezier path1,
+                                   const CubicBezier path2, float t)
     {
         return CubicBezier{ lerp(path1.p1, path2.p1, t),
                             lerp(path1.p2, path2.p2, t),
@@ -111,9 +177,8 @@ namespace math
                             lerp(path1.p4, path2.p4, t) };
     }
 
-    inline std::vector<CubicBezier>
-    interpolatePaths(const std::vector<CubicBezier> &path1,
-                     const std::vector<CubicBezier> &path2, float t)
+    inline BezierPath interpolatePaths(const BezierPath &path1,
+                                       const BezierPath &path2, float t)
     {
         if (path1.size() != path2.size())
             throw std::runtime_error(

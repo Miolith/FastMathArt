@@ -1,10 +1,10 @@
 #pragma once
 #include <array>
 #include <cmath>
+#include <fmt/format.h>
 #include <iostream>
 #include <memory>
 #include <random>
-#include <fmt/format.h>
 
 namespace math
 {
@@ -110,7 +110,8 @@ namespace math
             return vec3(this->x / length, this->y / length, this->z / length);
         }
 
-        friend constexpr std::ostream &operator<<(std::ostream &os, const vec3<Number> v)
+        friend constexpr std::ostream &operator<<(std::ostream &os,
+                                                  const vec3<Number> v)
         {
             os << "vec3(" << v.x << ' ' << v.y << ' ' << v.z << ')';
             return os;
@@ -124,19 +125,19 @@ namespace math
         }
 
         friend constexpr vec3<Number> operator+(const vec3<Number> &u,
-                                      const vec3<Number> &v)
+                                                const vec3<Number> &v)
         {
             return vec3(u.x + v.x, u.y + v.y, u.z + v.z);
         }
 
         friend constexpr vec3<Number> operator-(const vec3<Number> &u,
-                                      const vec3<Number> &v)
+                                                const vec3<Number> &v)
         {
             return vec3(u.x - v.x, u.y - v.y, u.z - v.z);
         }
 
         friend constexpr vec3<Number> operator*(const vec3<Number> &u,
-                                      const vec3<Number> &v)
+                                                const vec3<Number> &v)
         {
             return vec3(u.x * v.x, u.y * v.y, u.z * v.z);
         }
@@ -161,52 +162,55 @@ namespace math
             return vec3(-v.x, -v.y, -v.z);
         }
 
-        friend constexpr Number dot(const vec3<Number> &u, const vec3<Number> &v)
+        friend constexpr Number dot(const vec3<Number> &u,
+                                    const vec3<Number> &v)
         {
             return u.x * v.x + u.y * v.y + u.z * v.z;
         }
 
-        friend constexpr vec3<Number> cross(const vec3<Number> &u, const vec3<Number> &v)
+        friend constexpr vec3<Number> cross(const vec3<Number> &u,
+                                            const vec3<Number> &v)
         {
             return vec3(u.y * v.z - u.z * v.y, u.z * v.x - u.x * v.z,
                         u.x * v.y - u.y * v.x);
         }
 
-        friend constexpr bool almost_eq(const vec3<Number> &u, const vec3<Number> &v,
-                              float tolerance = 1e-8)
+        friend constexpr bool almost_eq(const vec3<Number> &u,
+                                        const vec3<Number> &v,
+                                        float tolerance = 1e-8)
         {
             return std::abs(u.x - v.x) < tolerance
                 && std::abs(u.y - v.y) < tolerance
                 && std::abs(u.z - v.z) < tolerance;
         }
 
-        friend constexpr bool operator==(const vec3<Number> &u, const vec3<Number> &v)
+        friend constexpr bool operator==(const vec3<Number> &u,
+                                         const vec3<Number> &v)
         {
             return u.x == v.x && u.y == v.y && u.z == v.z;
         }
 
-        friend constexpr bool operator!=(const vec3<Number> &u, const vec3<Number> &v)
+        friend constexpr bool operator!=(const vec3<Number> &u,
+                                         const vec3<Number> &v)
         {
             return !(u == v);
         }
-
-
     };
 
     using fvec3 = vec3<float>;
 
 } // namespace math
 
-
 // Allow fmt to format and print vec3 objects
 template <>
 template <typename Number>
 struct fmt::formatter<math::vec3<Number>> : nested_formatter<Number>
 {
-    auto format(math::vec3<Number> v, format_context& ctx) const
+    auto format(math::vec3<Number> v, format_context &ctx) const
     {
         return write_padded(ctx, [=](auto out) {
-            return format_to(out, "vec3({}, {}, {})", nested(v.x), nested(v.y), nested(v.z));
+            return format_to(out, "vec3({}, {}, {})", nested(v.x), nested(v.y),
+                             nested(v.z));
         });
     }
 };

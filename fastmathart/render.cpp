@@ -79,10 +79,10 @@ constexpr auto unit_circle()
     constexpr float c = 0.99873585;
 
     return std::array<math::fvec3, 12>{
-        math::fvec3(0, a, 0), math::fvec3(b, c, 0), math::fvec3(c, b, 0),
-        math::fvec3(a, 0, 0), math::fvec3(c, -b, 0), math::fvec3(b, -c, 0),
+        math::fvec3(0, a, 0),  math::fvec3(b, c, 0),   math::fvec3(c, b, 0),
+        math::fvec3(a, 0, 0),  math::fvec3(c, -b, 0),  math::fvec3(b, -c, 0),
         math::fvec3(0, -a, 0), math::fvec3(-b, -c, 0), math::fvec3(-c, -b, 0),
-        math::fvec3(-a, 0, 0), math::fvec3(-c, b, 0), math::fvec3(-b, c, 0)
+        math::fvec3(-a, 0, 0), math::fvec3(-c, b, 0),  math::fvec3(-b, c, 0)
     };
 }
 
@@ -96,9 +96,8 @@ auto circle_bezier(float radius)
     return p;
 }
 
-std::vector<math::CubicBezier> bezier_curve_approx(const PyAPI::Circle &circle)
+math::BezierPath bezier_curve_approx(const PyAPI::Circle &circle)
 {
-
     auto p = circle_bezier(circle.radius);
 
     std::vector<math::CubicBezier> path(4);
@@ -217,7 +216,7 @@ void place_shape(PyAPI::Circle &circle, pixel_buffer_t &frame_cache)
         place_cubic_bezier(bez, frame_cache, *circle.properties);
 }
 
-std::vector<math::CubicBezier> bezier_curve_approx(PyAPI::Rectangle &rect)
+math::BezierPath bezier_curve_approx(PyAPI::Rectangle &rect)
 {
     std::vector<math::CubicBezier> beziers(4);
 
@@ -236,7 +235,7 @@ std::vector<math::CubicBezier> bezier_curve_approx(PyAPI::Rectangle &rect)
     beziers[2] = math::CubicBezier::straightLine(lower_right, lower_left);
     beziers[3] = math::CubicBezier::straightLine(lower_left, upper_left);
 
-    return beziers;
+    return math::BezierPath(beziers);
 }
 
 void place_shape(PyAPI::Rectangle &rect, pixel_buffer_t &frame_cache)
@@ -274,9 +273,8 @@ float ease_in_out_cubic(float t)
                     : 1.0f - std::pow(-2.0f * t + 2.0f, 3.0f) / 2.0f;
 }
 
-void draw_path(std::vector<math::CubicBezier> &beziers,
-               pixel_buffer_t &frame_cache, video_buffer_t &video,
-               PyAPI::Properties &props)
+void draw_path(math::BezierPath &beziers, pixel_buffer_t &frame_cache,
+               video_buffer_t &video, PyAPI::Properties &props)
 {
     std::cout << "Drawing path"
               << "\n";
@@ -370,7 +368,7 @@ void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
 
     int frames = elem->seconds * config.fps;
 
-    std::vector<math::CubicBezier> src_beziers, dest_beziers;
+    math::BezierPath src_beziers, dest_beziers;
     PyAPI::Properties *src_props = nullptr, *dest_props = nullptr;
 
     PyAPI::shape_visitor(
