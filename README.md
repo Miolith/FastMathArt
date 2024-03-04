@@ -11,10 +11,11 @@ It's explicitly made for content creator as a way to create procedural animation
 
 ```
 git clone https://github.com/Miolith/FastMathArt.git
+cd FastMathArt
 mkdir build && cd build
-conan install ..
+conan install . --output-folder build --build=missing
 cmake ..
-make
+make fma
 ```
 
 ## Example
@@ -52,5 +53,9 @@ scene.append(
 )
 
 render(scene, filename="example.mp4")
+```
+Run
+```
+python example.py
 ```
 https://github.com/Miolith/FastMathArt/assets/36192751/181dd109-5562-4e6c-865a-72cff9d87b42
