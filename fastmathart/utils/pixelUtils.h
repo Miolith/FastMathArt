@@ -139,15 +139,20 @@ color_t<RGB_f32> cast_to_color_t<RGB_f32>(PyAPI::Color &color);
 
 struct pixel_buffer_t
 {
-    std::unique_ptr<uint8_t[]> buffer;
+    uint8_t *buffer;
     int width;
     int height;
+    bool owns_buffer;
 
     pixel_buffer_t(int width, int height);
     pixel_buffer_t(pixel_buffer_t &&other);
+    pixel_buffer_t(uint8_t *buffer, int width, int height);
+    ~pixel_buffer_t();
+    void copy_from(pixel_buffer_t &other);
+    void copy_from(pixel_buffer_t &&other);
     void set_pixel(int x, int y, const color_t<RGB_8> &color);
     color_t<RGB_8> get_pixel(int x, int y);
-    void clear(const color_t<RGB_8> color = color_t<RGB_8>(0, 0, 0));
+    void clear(const color_t<RGB_8> color = { 0, 0, 0 });
 };
 
 struct video_buffer_t
@@ -158,7 +163,7 @@ struct video_buffer_t
     int frames;
 
     video_buffer_t(int width, int height, int frames);
-    video_buffer_t(video_buffer_t &&other);
     void set_frame(const pixel_buffer_t &framebuffer, int frame_index);
     void set_all_frames(const pixel_buffer_t &framebuffer);
+    pixel_buffer_t get_frame(int frame_index);
 };

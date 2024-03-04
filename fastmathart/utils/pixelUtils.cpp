@@ -248,15 +248,38 @@ Buffer utils
 pixel_buffer_t::pixel_buffer_t(int width, int height)
     : width(width)
     , height(height)
+    , buffer(new uint8_t[width * height * 3])
+    , owns_buffer(true)
+{ }
+
+pixel_buffer_t::pixel_buffer_t(uint8_t *buffer, int width, int height)
+    : buffer(buffer)
+    , width(width)
+    , height(height)
+    , owns_buffer(false)
+{ }
+
+pixel_buffer_t::~pixel_buffer_t()
 {
-    buffer = std::make_unique<uint8_t[]>(width * height * 3);
+    if (owns_buffer)
+        delete[] buffer;
 }
 
-pixel_buffer_t::pixel_buffer_t(pixel_buffer_t &&other)
-    : buffer(std::move(other.buffer))
-    , width(other.width)
-    , height(other.height)
-{ }
+void pixel_buffer_t::copy_from(pixel_buffer_t &other)
+{
+    if (other.width != width || other.height != height)
+        return;
+
+    std::memcpy(buffer, other.buffer, width * height * 3);
+}
+
+void pixel_buffer_t::copy_from(pixel_buffer_t &&other)
+{
+    if (other.width != width || other.height != height)
+        return;
+
+    std::memcpy(buffer, other.buffer, width * height * 3);
+}
 
 void pixel_buffer_t::set_pixel(int x, int y, const color_t<RGB_8> &color)
 {
@@ -296,13 +319,6 @@ video_buffer_t::video_buffer_t(int width, int height, int frames)
     buffer = std::make_unique<uint8_t[]>(width * height * frames * 3);
 }
 
-video_buffer_t::video_buffer_t(video_buffer_t &&other)
-    : buffer(std::move(other.buffer))
-    , width(other.width)
-    , height(other.height)
-    , frames(other.frames)
-{ }
-
 void video_buffer_t::set_all_frames(const pixel_buffer_t &framebuffer)
 {
     if (framebuffer.width != width || framebuffer.height != height)
@@ -310,8 +326,8 @@ void video_buffer_t::set_all_frames(const pixel_buffer_t &framebuffer)
 
     for (int i = 0; i < frames; i++)
     {
-        std::memcpy(buffer.get() + i * width * height * 3,
-                    framebuffer.buffer.get(), width * height * 3);
+        std::memcpy(buffer.get() + i * width * height * 3, framebuffer.buffer,
+                    width * height * 3);
     }
 }
 
@@ -322,5 +338,14 @@ void video_buffer_t::set_frame(const pixel_buffer_t &framebuffer,
         return;
 
     std::memcpy(buffer.get() + frame_index * width * height * 3,
-                framebuffer.buffer.get(), width * height * 3);
+                framebuffer.buffer, width * height * 3);
+}
+
+pixel_buffer_t video_buffer_t::get_frame(int frame_index)
+{
+    if (frame_index < 0 || frame_index >= frames)
+        return pixel_buffer_t(0, 0);
+
+    return pixel_buffer_t(buffer.get() + frame_index * width * height * 3,
+                          width, height);
 }

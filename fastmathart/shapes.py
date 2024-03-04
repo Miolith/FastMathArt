@@ -109,7 +109,7 @@ def Star(radius: float, spikes: int, properties: Properties = None):
     return Polygon(x_points, y_points, properties)
 
 def Cross(radius: float, properties: Properties = None):
-    x_points = [radius, -radius, 0, radius, -radius]
-    y_points = [radius, -radius, 0, -radius, radius]
-    return Polygon(x_points, y_points, properties)
+    x_points = [radius, -radius, radius, -radius]
+    y_points = [radius, -radius, -radius, radius]
+    return Polylines(x_points, y_points, properties)
 

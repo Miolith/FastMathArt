@@ -4,8 +4,8 @@
 #include <fmt/format.h>
 #include <iostream>
 #include <memory>
-#include <random>
 #include <numbers>
+#include <random>
 
 namespace math
 {

@@ -72,10 +72,10 @@ namespace math
 
     class BezierPath
     {
-        private:
+    private:
         std::vector<CubicBezier> curves;
 
-        public:
+    public:
         BezierPath(std::vector<CubicBezier> curves)
             : curves(curves)
         { }
@@ -202,12 +202,12 @@ namespace math
         constexpr float b = 0.55342686;
         constexpr float c = 0.99873585;
 
-        return std::array<fvec3, 12>{
-            fvec3(0, a, 0),  fvec3(b, c, 0),   fvec3(c, b, 0),
-            fvec3(a, 0, 0),  fvec3(c, -b, 0),  fvec3(b, -c, 0),
-            fvec3(0, -a, 0), fvec3(-b, -c, 0), fvec3(-c, -b, 0),
-            fvec3(-a, 0, 0), fvec3(-c, b, 0),  fvec3(-b, c, 0)
-        };
+        return std::array<fvec3, 12>{ fvec3(0, a, 0),   fvec3(b, c, 0),
+                                      fvec3(c, b, 0),   fvec3(a, 0, 0),
+                                      fvec3(c, -b, 0),  fvec3(b, -c, 0),
+                                      fvec3(0, -a, 0),  fvec3(-b, -c, 0),
+                                      fvec3(-c, -b, 0), fvec3(-a, 0, 0),
+                                      fvec3(-c, b, 0),  fvec3(-b, c, 0) };
     }
 
     inline std::array<fvec3, 12> circle_bezier(float radius)
