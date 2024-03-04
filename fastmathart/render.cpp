@@ -181,6 +181,13 @@ void place_shape(PyAPI::Circle &circle, pixel_buffer_t &frame_cache)
         place_cubic_bezier(bez, frame_cache, *circle.properties);
 }
 
+void place_shape(PyAPI::Polyline &polyline, pixel_buffer_t &frame_cache)
+{
+    auto beziers = bezier_curve_approx(polyline);
+    for (auto &bez : beziers)
+        place_cubic_bezier(bez, frame_cache, *polyline.properties);
+}
+
 math::BezierPath bezier_curve_approx(PyAPI::Rectangle &rect)
 {
     std::vector<math::CubicBezier> beziers(4);
