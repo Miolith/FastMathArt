@@ -7,6 +7,7 @@ project(FastMathArt VERSION 0.1.0
 
 set(CMAKE_CXX_STANDARD 20) # C++20 required
 set(CMAKE_CXX_STANDARD_REQUIRED ON) # Like really required
+set(CMAKE_WINDOWS_EXPORT_ALL_SYMBOLS 1)
 set(CMAKE_CXX_EXTENSIONS OFF) # disable std=gnuc++ in favor of std=c++
 set_property(GLOBAL PROPERTY USE_FOLDERS ON) # Enable folders in IDEs
 
