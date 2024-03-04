@@ -16,6 +16,7 @@
 #include "utils/cWrapper.h"
 #include "utils/pixelUtils.h"
 
+static std::unordered_map<void*, std::pair<std::vector<math::fvec3>, PyAPI::Properties>> scene_cache;
 static std::ofstream concat_file;
 
 void save_to_video_file(video_buffer_t &video_buffer, std::string_view filename,
@@ -250,7 +251,7 @@ float ease_in_out_cubic(float t)
 }
 
 void draw_path(math::BezierPath &beziers, video_buffer_t &video,
-               PyAPI::Properties &props)
+               PyAPI::Properties &props, void* obj)
 {
     std::cout << "Drawing path"
               << "\n";
@@ -296,6 +297,7 @@ void draw_path(math::BezierPath &beziers, video_buffer_t &video,
             }
         }
     }
+    scene_cache[obj] = {segments, props};
 }
 
 void place_shape(PyAPI::Polyline &polyline, pixel_buffer_t &frame_cache)
@@ -323,7 +325,7 @@ void render_element(PyAPI::Draw *elem, PyAPI::Config &config,
         PyAPI::shape_visitor(
             [&](auto *shape) {
                 auto beziers = bezier_curve_approx(*shape);
-                draw_path(beziers, video, *shape->properties);
+                draw_path(beziers, video, *shape->properties, shape);
             },
             elem->obj_list[j], elem->obj_types[j]);
     }
@@ -331,6 +333,7 @@ void render_element(PyAPI::Draw *elem, PyAPI::Config &config,
     save_to_video_file(video, "draw.mp4", config.fps, config.width,
                        config.height, frames);
 }
+
 
 void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
                     pixel_buffer_t &frame_cache)
@@ -342,6 +345,7 @@ void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
 
     math::BezierPath src_beziers, dest_beziers;
     PyAPI::Properties *src_props = nullptr, *dest_props = nullptr;
+    scene_cache.erase(elem->src);
 
     PyAPI::shape_visitor(
         [&](auto *shape) {
@@ -359,6 +363,19 @@ void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
 
     auto video = video_buffer_t(frame_cache.width, frame_cache.height, frames);
 
+    // render everything on scene cache
+    frame_cache.clear();
+    for (auto &[pointer, pair] : scene_cache)
+    {
+        auto& segments = pair.first;
+        auto& properties = pair.second;
+        std::cout << "Rendering from cache"
+                  << "\n";
+        for (std::size_t i = 0; i < segments.size() - 1; i++)
+            render_line(segments[i], segments[i + 1], frame_cache, properties);
+    }
+    video.set_all_frames(frame_cache);
+
     math::alignPaths(src_beziers, dest_beziers);
 
     auto props = *src_props;
@@ -375,15 +392,15 @@ void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
         props.color->value = color_values;
         auto morphed_beziers =
             math::interpolatePaths(src_beziers, dest_beziers, t);
+        
+        auto frame = video.get_frame(i);
         for (auto &bezier : morphed_beziers)
         {
-            place_cubic_bezier(bezier, frame_cache, props);
+            place_cubic_bezier(bezier, frame, props);
         }
-        video.set_frame(frame_cache, i);
-
-        if (i < frames - 1)
-            frame_cache.clear();
     }
+
+    frame_cache.copy_from(video.get_frame(frames - 1));
 
     save_to_video_file(video, "morph.mp4", config.fps, config.width,
                        config.height, frames);
@@ -405,6 +422,7 @@ void render_scene(PyAPI::SceneElement *elem, PyAPI::Config &config,
 
     pixel_buffer_t frame_cache(config.width, config.height);
     concat_file = std::ofstream("concat.txt");
+
 
     while (elem != nullptr)
     {
