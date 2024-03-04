@@ -99,4 +99,7 @@ jobs:
       run: ctest --build-config ${{ matrix.build_type }}
     
     - name: Python run
-      run: python ${{ github.workspace }}/example.py
+      run: |
+        python -m pip install --upgrade pip
+        python -m pip install numpy
+        python ${{ github.workspace }}/example.py
