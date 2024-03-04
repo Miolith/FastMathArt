@@ -9,11 +9,10 @@ It's explicitly made for content creator as a way to create procedural animation
 
 ## Install
 
-You first need to have python 3.9 or higher installed.
-All the dependencies are managed by **conan**, so you need to have it installed as well.
-```
-pip install conan
-```
+You need the following dependencies to build the project:
+- CMake (https://cmake.org/download/)
+- Conan (install by `pip install conan`)
+- C++20 compiler (GCC 10, Clang 11, MSVC 19.28)
 
 then just paste these commands in your terminal.
 
@@ -25,6 +24,11 @@ conan install . --output-folder build --build=missing
 cd build && cmake ..
 make fma
 ```
+Other dependencies are handled by Conan.
+
+Then to run the project, you need :
+- Python 3.9 or higher
+- FFmpeg (https://ffmpeg.org/download.html)
 
 ## Example
 ```python

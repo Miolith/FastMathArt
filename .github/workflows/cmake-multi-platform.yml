@@ -51,6 +51,12 @@ jobs:
       id: conan
       uses: turtlebrowser/get-conan@main
 
+    - name: Install ffmpeg
+      uses: FedericoCarboni/setup-ffmpeg@v2
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+      id: setup-ffmpeg
+
     - name: Install dependencies
       id: install
       run: |
