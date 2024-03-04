@@ -76,31 +76,31 @@ namespace math
         std::vector<CubicBezier> curves;
 
     public:
-        constexpr BezierPath(std::vector<CubicBezier> &curves)
+        BezierPath(std::vector<CubicBezier> &curves)
             : curves(curves)
         { }
 
-        constexpr BezierPath(std::initializer_list<CubicBezier> curves)
+        BezierPath(std::initializer_list<CubicBezier> curves)
             : curves(curves)
         { }
 
-        constexpr BezierPath(std::vector<CubicBezier> &&curves)
+        BezierPath(std::vector<CubicBezier> &&curves)
             : curves(std::move(curves))
         { }
 
-        constexpr BezierPath()
+        BezierPath()
         {
             curves = {};
         }
 
-        constexpr math::fvec3 valueAt(float t) const
+        math::fvec3 valueAt(float t) const
         {
             auto curve_index = static_cast<int>(t * curves.size());
             auto curve_t = (t * curves.size()) - curve_index;
             return curves[curve_index].valueAt(curve_t);
         }
 
-        constexpr float length(int precision = 15) const
+        float length(int precision = 15) const
         {
             float length = 0.0f;
             for (auto &curve : curves)
@@ -110,27 +110,27 @@ namespace math
             return length;
         }
 
-        constexpr void addCurve(const CubicBezier &curve)
+        void addCurve(const CubicBezier &curve)
         {
             curves.push_back(curve);
         }
 
-        constexpr std::size_t size() const
+        std::size_t size() const
         {
             return curves.size();
         }
 
-        constexpr CubicBezier &operator[](std::size_t index)
+        CubicBezier &operator[](std::size_t index)
         {
             return curves[index];
         }
 
-        constexpr const CubicBezier &operator[](std::size_t index) const
+        const CubicBezier &operator[](std::size_t index) const
         {
             return curves[index];
         }
 
-        constexpr auto longest_curve() const
+        auto longest_curve() const
         {
             return std::distance(curves.begin(),
                                  std::max_element(curves.begin(), curves.end(),
@@ -148,12 +148,12 @@ namespace math
             curves.insert(curves.begin() + index + 1, right_half);
         }
 
-        constexpr auto begin()
+        auto begin()
         {
             return curves.begin();
         }
 
-        constexpr auto end()
+        auto end()
         {
             return curves.end();
         }
