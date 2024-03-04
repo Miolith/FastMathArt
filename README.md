@@ -7,6 +7,16 @@ This project is at a very early development state, thus too basic to be useful.
 
 It's explicitly made for content creator as a way to create procedural animations in 2d and 3d.
 
+## Install
+
+```
+git clone https://github.com/Miolith/FastMathArt.git
+mkdir build && cd build
+conan install ..
+cmake ..
+make
+```
+
 ## Example
 ```python
 from fastmathart import *
