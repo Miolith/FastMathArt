@@ -1,5 +1,5 @@
 from ctypes import Structure, POINTER, c_void_p, c_uint8, c_float, cast, pointer, c_int
-from typing import Iterable
+from typing import Iterable, Union
 
 NOTYPE = 0
 RGB_3_FLOATS = 1
@@ -18,7 +18,7 @@ class Color(Structure):
 
     def __init__(
         self,
-        r: float | str = None,
+        r: Union[float, str] = None,
         g: float = None,
         b: float = None,
         type: int = NOTYPE
@@ -38,7 +38,11 @@ class Color(Structure):
             self.value = None
 
 
-def rgb(r: float | int | Iterable, g: float | int, b: float | int) -> Color:
+def rgb(
+        r: Union[float , int , Iterable],
+        g: Union[float , int],
+        b: Union[float , int]
+    ) -> Color:
     """
     Create a color object from RGB values
 
