@@ -7,7 +7,7 @@ from glob import glob
 files = []
 
 if platform.uname()[0] == "Windows":
-    files = glob("build/*fma*.dll")
+    files = glob("build/Release/fma.dll")
 elif platform.uname()[0] == "Linux":
     files = glob("build/*fma*.so")
 elif platform.uname()[0] == "Darwin":
