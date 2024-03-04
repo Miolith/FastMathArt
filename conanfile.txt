@@ -1,5 +1,6 @@
 [requires]
 fmt/10.2.1
+doctest/2.4.11
 
 [generators]
 CMakeDeps
