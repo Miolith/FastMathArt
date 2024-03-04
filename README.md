@@ -9,12 +9,20 @@ It's explicitly made for content creator as a way to create procedural animation
 
 ## Install
 
+You first need to have python 3.9 or higher installed.
+All the dependencies are managed by **conan**, so you need to have it installed as well.
+```
+pip install conan
+```
+
+then just paste these commands in your terminal.
+
 ```
 git clone https://github.com/Miolith/FastMathArt.git
 cd FastMathArt
-mkdir build && cd build
+mkdir build
 conan install . --output-folder build --build=missing
-cmake ..
+cd build && cmake ..
 make fma
 ```
 
