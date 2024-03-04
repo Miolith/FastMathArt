@@ -76,6 +76,39 @@ math::BezierPath bezier_curve_approx(const PyAPI::Circle &circle)
     return path;
 }
 
+math::BezierPath bezier_curve_approx(PyAPI::Rectangle &rect)
+{
+    std::vector<math::CubicBezier> beziers(4);
+
+    auto center =
+        math::fvec3(rect.properties->x, rect.properties->y, rect.properties->z);
+
+    auto upper_left = center + math::fvec3(-rect.width / 2, rect.height / 2, 0);
+    auto upper_right = center + math::fvec3(rect.width / 2, rect.height / 2, 0);
+    auto lower_right =
+        center + math::fvec3(rect.width / 2, -rect.height / 2, 0);
+    auto lower_left =
+        center + math::fvec3(-rect.width / 2, -rect.height / 2, 0);
+
+    beziers[0] = math::CubicBezier::straightLine(upper_left, upper_right);
+    beziers[1] = math::CubicBezier::straightLine(upper_right, lower_right);
+    beziers[2] = math::CubicBezier::straightLine(lower_right, lower_left);
+    beziers[3] = math::CubicBezier::straightLine(lower_left, upper_left);
+
+    return math::BezierPath(beziers);
+}
+
+math::BezierPath bezier_curve_approx(PyAPI::Polyline &polyline)
+{
+    std::vector<math::CubicBezier> beziers;
+    for (int i = 0; i < polyline.point_count - 1; i++)
+    {
+        auto p1 = math::fvec3(polyline.x[i], polyline.y[i], 0);
+        auto p2 = math::fvec3(polyline.x[i + 1], polyline.y[i + 1], 0);
+        beziers.push_back(math::CubicBezier::straightLine(p1, p2));
+    }
+    return math::BezierPath(beziers);
+}
 math::vec3<int> ndc_to_raster_space(math::fvec3 point, const int width,
                                     const int height)
 {
@@ -188,46 +221,16 @@ void place_shape(PyAPI::Polyline &polyline, pixel_buffer_t &frame_cache)
         place_cubic_bezier(bez, frame_cache, *polyline.properties);
 }
 
-math::BezierPath bezier_curve_approx(PyAPI::Rectangle &rect)
-{
-    std::vector<math::CubicBezier> beziers(4);
-
-    auto center =
-        math::fvec3(rect.properties->x, rect.properties->y, rect.properties->z);
-
-    auto upper_left = center + math::fvec3(-rect.width / 2, rect.height / 2, 0);
-    auto upper_right = center + math::fvec3(rect.width / 2, rect.height / 2, 0);
-    auto lower_right =
-        center + math::fvec3(rect.width / 2, -rect.height / 2, 0);
-    auto lower_left =
-        center + math::fvec3(-rect.width / 2, -rect.height / 2, 0);
-
-    beziers[0] = math::CubicBezier::straightLine(upper_left, upper_right);
-    beziers[1] = math::CubicBezier::straightLine(upper_right, lower_right);
-    beziers[2] = math::CubicBezier::straightLine(lower_right, lower_left);
-    beziers[3] = math::CubicBezier::straightLine(lower_left, upper_left);
-
-    return math::BezierPath(beziers);
-}
-
-math::BezierPath bezier_curve_approx(PyAPI::Polyline &polyline)
-{
-    std::vector<math::CubicBezier> beziers;
-    for (int i = 0; i < polyline.point_count - 1; i++)
-    {
-        auto p1 = math::fvec3(polyline.x[i], polyline.y[i], 0);
-        auto p2 = math::fvec3(polyline.x[i + 1], polyline.y[i + 1], 0);
-        beziers.push_back(math::CubicBezier::straightLine(p1, p2));
-    }
-    return math::BezierPath(beziers);
-}
-
 void place_shape(PyAPI::Rectangle &rect, pixel_buffer_t &frame_cache)
 {
     auto beziers = bezier_curve_approx(rect);
     for (auto &bez : beziers)
         place_cubic_bezier(bez, frame_cache, *rect.properties);
 }
+
+
+
+
 
 void render_element(PyAPI::Place *elem, PyAPI::Config &config,
                     pixel_buffer_t &frame_cache)
@@ -305,13 +308,6 @@ void draw_path(math::BezierPath &beziers, video_buffer_t &video,
         }
     }
     scene_cache[obj] = {segments, props};
-}
-
-void place_shape(PyAPI::Polyline &polyline, pixel_buffer_t &frame_cache)
-{
-    auto beziers = bezier_curve_approx(polyline);
-    for (auto &bez : beziers)
-        place_cubic_bezier(bez, frame_cache, *polyline.properties);
 }
 
 void render_element(PyAPI::Draw *elem, PyAPI::Config &config,
