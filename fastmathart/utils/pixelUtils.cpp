@@ -248,15 +248,15 @@ Buffer utils
 pixel_buffer_t::pixel_buffer_t(int width, int height)
     : width(width)
     , height(height)
-    , buffer(new uint8_t[width * height * 3])
     , owns_buffer(true)
+    , buffer(new uint8_t[width * height * 3])
 { }
 
 pixel_buffer_t::pixel_buffer_t(uint8_t *buffer, int width, int height)
-    : buffer(buffer)
-    , width(width)
+    : width(width)
     , height(height)
     , owns_buffer(false)
+    , buffer(buffer)
 { }
 
 pixel_buffer_t::~pixel_buffer_t()

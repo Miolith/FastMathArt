@@ -213,6 +213,7 @@ namespace math
 } // namespace math
 
 // Allow fmt to format and print vec3 objects
+/*
 template <>
 template <typename Number>
 struct fmt::formatter<math::vec3<Number>> : nested_formatter<Number>
@@ -225,3 +226,4 @@ struct fmt::formatter<math::vec3<Number>> : nested_formatter<Number>
         });
     }
 };
+*/

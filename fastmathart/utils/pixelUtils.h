@@ -139,10 +139,10 @@ color_t<RGB_f32> cast_to_color_t<RGB_f32>(PyAPI::Color &color);
 
 struct pixel_buffer_t
 {
-    uint8_t *buffer;
     int width;
     int height;
     bool owns_buffer;
+    uint8_t *buffer;
 
     pixel_buffer_t(int width, int height);
     pixel_buffer_t(pixel_buffer_t &&other);

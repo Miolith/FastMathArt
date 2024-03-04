@@ -16,10 +16,10 @@ namespace math
 
     struct CubicBezier
     {
-        math::fvec3 p1;
-        math::fvec3 p2;
-        math::fvec3 p3;
-        math::fvec3 p4;
+        math::fvec3 p1{};
+        math::fvec3 p2{};
+        math::fvec3 p3{};
+        math::fvec3 p4{};
 
         constexpr CubicBezier(math::fvec3 p1, math::fvec3 p2, math::fvec3 p3,
                               math::fvec3 p4)
@@ -29,7 +29,7 @@ namespace math
             , p4(p4)
         { }
 
-        CubicBezier() = default;
+        constexpr CubicBezier() = default;
 
         constexpr math::fvec3 valueAt(const float t) const
         {
@@ -38,7 +38,7 @@ namespace math
                         lerp(p2_p3, lerp(p3, p4, t), t), t);
         }
 
-        constexpr std::pair<CubicBezier, CubicBezier> split(const float t)
+        constexpr std::pair<CubicBezier, CubicBezier> split(const float t) const
         {
             auto p12 = lerp(p1, p2, t);
             auto p23 = lerp(p2, p3, t);
@@ -76,13 +76,13 @@ namespace math
         std::vector<CubicBezier> curves;
 
     public:
-        BezierPath(std::vector<CubicBezier> curves)
+        constexpr BezierPath(std::vector<CubicBezier> curves)
             : curves(curves)
         { }
 
-        BezierPath() = default;
+        constexpr BezierPath() = default;
 
-        constexpr math::fvec3 valueAt(const float t) const
+        constexpr math::fvec3 valueAt(float t) const
         {
             auto curve_index = static_cast<int>(t * curves.size());
             auto curve_t = (t * curves.size()) - curve_index;
@@ -137,12 +137,12 @@ namespace math
             curves.insert(curves.begin() + index + 1, right_half);
         }
 
-        auto begin()
+        constexpr auto begin()
         {
             return curves.begin();
         }
 
-        auto end()
+        constexpr auto end()
         {
             return curves.end();
         }
