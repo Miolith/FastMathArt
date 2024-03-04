@@ -76,11 +76,22 @@ namespace math
         std::vector<CubicBezier> curves;
 
     public:
-        constexpr BezierPath(std::vector<CubicBezier> curves)
+        constexpr BezierPath(std::vector<CubicBezier> &curves)
             : curves(curves)
         { }
 
-        constexpr BezierPath() = default;
+        constexpr BezierPath(std::initializer_list<CubicBezier> curves)
+            : curves(curves)
+        { }
+
+        constexpr BezierPath(std::vector<CubicBezier> &&curves)
+            : curves(std::move(curves))
+        { }
+
+        constexpr BezierPath()
+        {
+            curves = {};
+        }
 
         constexpr math::fvec3 valueAt(float t) const
         {
