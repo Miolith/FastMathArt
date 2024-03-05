@@ -192,7 +192,7 @@ void render_line(math::fvec3 point1, math::fvec3 point2,
     }
 }
 
-void place_cubic_bezier(math::CubicBezier &bezier, pixel_buffer_t &frame_cache,
+void render_cubic_bezier(math::CubicBezier &bezier, pixel_buffer_t &frame_cache,
                         PyAPI::Properties props)
 {
     math::fvec3 point1 = bezier.valueAt(0);
@@ -207,31 +207,6 @@ void place_cubic_bezier(math::CubicBezier &bezier, pixel_buffer_t &frame_cache,
     }
 }
 
-void place_shape(PyAPI::Circle &circle, pixel_buffer_t &frame_cache)
-{
-    auto beziers = bezier_curve_approx(circle);
-    for (auto &bez : beziers)
-        place_cubic_bezier(bez, frame_cache, *circle.properties);
-}
-
-void place_shape(PyAPI::Polyline &polyline, pixel_buffer_t &frame_cache)
-{
-    auto beziers = bezier_curve_approx(polyline);
-    for (auto &bez : beziers)
-        place_cubic_bezier(bez, frame_cache, *polyline.properties);
-}
-
-void place_shape(PyAPI::Rectangle &rect, pixel_buffer_t &frame_cache)
-{
-    auto beziers = bezier_curve_approx(rect);
-    for (auto &bez : beziers)
-        place_cubic_bezier(bez, frame_cache, *rect.properties);
-}
-
-
-
-
-
 void render_element(PyAPI::Place *elem, PyAPI::Config &config,
                     pixel_buffer_t &frame_cache)
 {
@@ -241,7 +216,11 @@ void render_element(PyAPI::Place *elem, PyAPI::Config &config,
     for (int j = 0; j < elem->obj_count; j++)
     {
         PyAPI::shape_visitor(
-            [&](auto *shape) -> void { place_shape(*shape, frame_cache); },
+            [&](auto *shape) {
+                auto beziers = bezier_curve_approx(*shape);
+                for (auto &bez : beziers)
+                    render_cubic_bezier(bez, frame_cache, *shape->properties);
+            },
             elem->obj_list[j], elem->obj_types[j]);
     }
 }
@@ -397,10 +376,9 @@ void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
             math::interpolatePaths(src_beziers, dest_beziers, t);
         
         auto frame = video.get_frame(i);
+
         for (auto &bezier : morphed_beziers)
-        {
-            place_cubic_bezier(bezier, frame, props);
-        }
+            render_cubic_bezier(bezier, frame, props);
     }
 
     frame_cache.copy_from(video.get_frame(frames - 1));
