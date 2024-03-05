@@ -16,13 +16,23 @@ You need the following dependencies to build the project:
 
 then just paste these commands in your terminal.
 
+**For Windows**
 ```
 git clone https://github.com/Miolith/FastMathArt.git
 cd FastMathArt
 conan install . --output-folder build --build=missing
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release --preset=conan-default
 cmake --build build --config Release --target fma
 ```
+For **Linux** and **MacOS**, we just replace `--preset=conan-default` with `--preset=conan-release`
+```
+git clone https://github.com/Miolith/FastMathArt.git
+cd FastMathArt
+conan install . --output-folder build --build=missing
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release --preset=conan-release
+cmake --build build --config Release --target fma
+```
+
 Other dependencies are handled by Conan.
 
 Then to run the project, you need :
