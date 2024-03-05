@@ -11,7 +11,7 @@ It's explicitly made for content creator as a way to create procedural animation
 
 You need the following dependencies to build the project:
 - CMake (https://cmake.org/download/)
-- Conan (install by `pip install conan`)
+- Conan (install by `pip install conan && conan profile detect`)
 - C++20 compiler (GCC 10, Clang 11, MSVC 19.28)
 
 then just paste these commands in your terminal.
@@ -19,10 +19,9 @@ then just paste these commands in your terminal.
 ```
 git clone https://github.com/Miolith/FastMathArt.git
 cd FastMathArt
-mkdir build
 conan install . --output-folder build --build=missing
-cd build && cmake ..
-make fma
+cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build --config Release --target fma
 ```
 Other dependencies are handled by Conan.
 
