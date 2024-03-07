@@ -3,12 +3,10 @@ from fastmathart.const import *
 from fastmathart.properties import Properties
 import math
 
-ShapeType = {
-    "NO_TYPE": 0,
-    "CIRCLE": 1,
-    "RECTANGLE": 2,
-    "POLYLINES": 3
-}
+NO_TYPE = 0
+CIRCLE = 1
+RECTANGLE = 2
+POLYLINES = 3
 
 class Circle(Structure):
     _fields_ = [
@@ -21,6 +19,7 @@ class Circle(Structure):
         radius: float = 1.0,
         properties: Properties = None
     ):
+        self.shape_id = CIRCLE
         self.radius = radius
         if properties is not None:
             self.properties = pointer(properties)
@@ -39,6 +38,7 @@ class Rectangle(Structure):
         height: float = 1.0,
         properties: Properties = None
     ):
+        self.shape_id = RECTANGLE
         self.width = width
         self.height = height
         if properties is not None:
@@ -58,6 +58,7 @@ class Polylines(Structure):
         y: list,
         properties: Properties = None
     ):
+        self.shape_id = POLYLINES
         if len(x) != len(y):
             raise ValueError("x and y must have the same length")
         

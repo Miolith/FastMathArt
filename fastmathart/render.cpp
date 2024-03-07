@@ -16,7 +16,8 @@
 #include "utils/cWrapper.h"
 #include "utils/pixelUtils.h"
 
-static std::unordered_map<void*, std::pair<std::vector<math::fvec3>, PyAPI::Properties>> scene_cache;
+using segment_cache = std::unordered_map<void*, std::pair<std::vector<math::fvec3>, PyAPI::Properties>>;
+static segment_cache scene_cache;
 static std::ofstream concat_file;
 
 void save_to_video_file(video_buffer_t &video_buffer, std::string_view filename,
@@ -47,20 +48,7 @@ void save_to_video_file(video_buffer_t &video_buffer, std::string_view filename,
     num_files++;
 }
 
-void render_element(PyAPI::Wait *elem, PyAPI::Config &config,
-                    pixel_buffer_t &frame_cache)
-{
-    std::cout << "Waiting for " << elem->seconds << " seconds"
-              << "\n";
-    int frames = elem->seconds * config.fps;
 
-    video_buffer_t video_buffer(config.width, config.height, frames);
-
-    video_buffer.set_all_frames(frame_cache);
-
-    save_to_video_file(video_buffer, "wait.mp4", config.fps, config.width,
-                       config.height, frames);
-}
 
 math::BezierPath bezier_curve_approx(const PyAPI::Circle &circle)
 {
@@ -207,38 +195,6 @@ void render_cubic_bezier(math::CubicBezier &bezier, pixel_buffer_t &frame_cache,
     }
 }
 
-void render_element(PyAPI::Place *elem, PyAPI::Config &config,
-                    pixel_buffer_t &frame_cache)
-{
-    std::cout << "Placing " << elem->obj_count << " objects"
-              << "\n";
-
-    for (int j = 0; j < elem->obj_count; j++)
-    {
-        PyAPI::shape_visitor(
-            [&](auto *shape) {
-                auto beziers = bezier_curve_approx(*shape);
-                for (auto &bez : beziers)
-                    render_cubic_bezier(bez, frame_cache, *shape->properties);
-            },
-            elem->obj_list[j], elem->obj_types[j]);
-    }
-}
-
-// cubic bezier easing function
-// faster at the start and end
-// slow in the middle
-float rate_func(float t)
-{
-    return t * (2.0f * t * t - 3.0f * t + 2.0f);
-}
-
-float ease_in_out_cubic(float t)
-{
-    return t < 0.5f ? 4.0f * t * t * t
-                    : 1.0f - std::pow(-2.0f * t + 2.0f, 3.0f) / 2.0f;
-}
-
 void draw_path(math::BezierPath &beziers, video_buffer_t &video,
                PyAPI::Properties &props, void* obj)
 {
@@ -289,8 +245,43 @@ void draw_path(math::BezierPath &beziers, video_buffer_t &video,
     scene_cache[obj] = {segments, props};
 }
 
+void render_element(PyAPI::Wait *elem, PyAPI::Config &config,
+                    pixel_buffer_t &frame_cache, std::optional<video_buffer_t> &video_buffer)
+{
+    std::cout << "Waiting for " << elem->seconds << " seconds"
+              << "\n";
+    int frames = elem->seconds * config.fps;
+
+    if (!video_buffer.has_value())
+        video_buffer.emplace(config.width, config.height, frames);
+
+    auto &video = video_buffer.value();
+
+    video.set_all_frames(frame_cache);
+}
+
+
+void render_element(PyAPI::Place *elem, PyAPI::Config &config,
+                    pixel_buffer_t &frame_cache, std::optional<video_buffer_t> &video_buffer)
+{
+    std::cout << "Placing " << elem->obj_count << " objects"
+              << "\n";
+
+    for (int j = 0; j < elem->obj_count; j++)
+    {
+        PyAPI::shape_visitor(
+            [&](auto *shape) {
+                auto beziers = bezier_curve_approx(*shape);
+                for (auto &bez : beziers)
+                    render_cubic_bezier(bez, frame_cache, *shape->properties);
+            },
+            elem->obj_list[j], elem->obj_types[j]);
+    }
+}
+
+
 void render_element(PyAPI::Draw *elem, PyAPI::Config &config,
-                    pixel_buffer_t &frame_cache)
+                    pixel_buffer_t &frame_cache, std::optional<video_buffer_t> &video_buffer)
 {
     std::cout << "Drawing " << elem->obj_count << " objects"
               << "\n";
@@ -299,7 +290,10 @@ void render_element(PyAPI::Draw *elem, PyAPI::Config &config,
     std::cout << "Frames: " << frames << "\n";
     std::cout << "Seconds: " << elem->seconds << "\n";
 
-    auto video = video_buffer_t(frame_cache.width, frame_cache.height, frames);
+    if (!video_buffer.has_value())
+        video_buffer.emplace(config.width, config.height, frames);
+
+    auto &video = video_buffer.value();
     video.set_frame(frame_cache, 0);
 
     for (int j = 0; j < elem->obj_count; j++)
@@ -312,13 +306,48 @@ void render_element(PyAPI::Draw *elem, PyAPI::Config &config,
             elem->obj_list[j], elem->obj_types[j]);
     }
     frame_cache.copy_from(video.get_frame(frames - 1));
-    save_to_video_file(video, "draw.mp4", config.fps, config.width,
-                       config.height, frames);
 }
 
+void render_cached_scene(segment_cache &segments, pixel_buffer_t &frame_cache)
+{
+    for (auto &[pointer, pair] : segments)
+    {
+        auto& segments = pair.first;
+        auto& properties = pair.second;
+        std::cout << "Rendering from cache"
+                  << "\n";
+        for (std::size_t i = 0; i < segments.size() - 1; i++)
+            render_line(segments[i], segments[i + 1], frame_cache, properties);
+    }
+}
+
+void prepare_cache(segment_cache &segments, auto &elem)
+{
+    (void)segments;
+    (void)elem;
+    std::puts("Doing nothing");
+}
+
+void prepare_cache(segment_cache &segments, PyAPI::Morph &elem)
+{
+    segments.erase(elem.src);
+    std::puts(fmt::format("Deleted {}", elem.src).c_str());
+}
+
+void prepare_cache(segment_cache &segments, PyAPI::Simultaneous &elem)
+{
+    for (int i = 0; i < elem.obj_count; i++)
+    {
+        PyAPI::element_visitor(
+            [&](auto *element) {
+                prepare_cache(segments, *element);
+            },
+            elem.obj_list[i], elem.obj_types[i]);
+    }
+}
 
 void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
-                    pixel_buffer_t &frame_cache)
+                    pixel_buffer_t &frame_cache, std::optional<video_buffer_t> &video_buffer)
 {
     std::cout << "Morphing " << elem->seconds << " seconds"
               << "\n";
@@ -343,21 +372,16 @@ void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
         },
         elem->dest, elem->dest_type);
 
-    auto video = video_buffer_t(frame_cache.width, frame_cache.height, frames);
+    if (!video_buffer.has_value())
+        video_buffer.emplace(config.width, config.height, frames);
+    
+    auto &video = video_buffer.value();
 
-    // render everything on scene cache
-    frame_cache.clear();
-    for (auto &[pointer, pair] : scene_cache)
+    for(int i =0; i < frames; i++)
     {
-        auto& segments = pair.first;
-        auto& properties = pair.second;
-        std::cout << "Rendering from cache"
-                  << "\n";
-        for (std::size_t i = 0; i < segments.size() - 1; i++)
-            render_line(segments[i], segments[i + 1], frame_cache, properties);
+        auto fr = video.get_frame(i);
+        render_cached_scene(scene_cache, fr);
     }
-    video.set_all_frames(frame_cache);
-
     math::alignPaths(src_beziers, dest_beziers);
 
     auto props = *src_props;
@@ -380,16 +404,63 @@ void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
         for (auto &bezier : morphed_beziers)
             render_cubic_bezier(bezier, frame, props);
     }
+}
+
+
+float get_seconds(auto* element)
+{
+    return element->seconds;
+}
+
+float get_seconds(PyAPI::Place *elem)
+{
+    return 0.0f;
+}
+
+float get_seconds(PyAPI::Simultaneous *elem)
+{
+    float seconds = 0.0f;
+
+    for (int i = 0; i < elem->obj_count; i++)
+    {
+        PyAPI::element_visitor(
+            [&](auto *element) {
+                seconds = std::max(seconds, get_seconds(element));
+            },
+            elem->obj_list[i], elem->obj_types[i]);
+    }
+
+    return seconds;
+}
+
+void render_element(PyAPI::Simultaneous *elem, PyAPI::Config &config,
+                    pixel_buffer_t &frame_cache, std::optional<video_buffer_t> &video_buffer)
+{
+    std::cout << "Simultaneous " << '\n';
+
+    float seconds = get_seconds(elem);
+
+    int frames = seconds * config.fps;
+    if (!video_buffer.has_value())
+        video_buffer.emplace(config.width, config.height, frames);
+    
+    auto &video = video_buffer.value();
+
+    for (int i = 0; i < elem->obj_count; i++)
+    {
+        PyAPI::element_visitor(
+            [&](auto *element) {
+                render_element(element, config, frame_cache, video_buffer);
+            },
+            elem->obj_list[i], elem->obj_types[i]);
+    }
 
     frame_cache.copy_from(video.get_frame(frames - 1));
-
-    save_to_video_file(video, "morph.mp4", config.fps, config.width,
-                       config.height, frames);
 }
 
 void concat_animation_files(std::string_view filename)
 {
-    std::string command = fmt::format("ffmpeg -y -hide_banner -loglevel error "
+    const std::string command = fmt::format("ffmpeg -y -hide_banner -loglevel error "
                                       "-f concat -i concat.txt -c copy {name}",
                                       fmt::arg("name", filename));
 
@@ -407,12 +478,22 @@ void render_scene(PyAPI::SceneElement *elem, PyAPI::Config &config,
 
     while (elem != nullptr)
     {
+        int name = 0;
         PyAPI::element_visitor(
-            [&](auto *element) -> void {
-                render_element(element, config, frame_cache);
+            [&](auto *element)
+            {
+                auto opt = std::optional<video_buffer_t>();
+                prepare_cache(scene_cache, *element);
+                render_element(element, config, frame_cache, opt);
+                if (opt.has_value())
+                {
+                    auto &video = opt.value();
+                    save_to_video_file(video, "temp.mp4", config.fps, config.width, config.height, video.frames);
+                }
             },
-            elem);
+            elem->elem, elem->type);
         elem = elem->next;
+        name++;
     }
 
     concat_file.close();

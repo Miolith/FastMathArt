@@ -49,7 +49,7 @@ cross = Cross(
 scene.append(
     Draw(star, circle, seconds=2.0),
     Wait(seconds=0.5),
-    Morph(star, rect, seconds=2.0),
+    Morph(star, rect, seconds=2.0) & Morph(circle, cross, seconds=2.0),
     Wait(seconds=0.5)
 )
 

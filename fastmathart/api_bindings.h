@@ -18,7 +18,8 @@ namespace PyAPI
         WAIT = 1,
         PLACE = 2,
         DRAW = 3,
-        MORPH = 4
+        MORPH = 4,
+        SIMULTANEOUS = 5
     };
 
     enum ShapeType
@@ -65,15 +66,23 @@ namespace PyAPI
         float seconds;
     };
 
-    template <class F>
-    inline constexpr void element_visitor(F &&lambda, SceneElement *elem)
+    struct Simultaneous
     {
-        switch (elem->type)
+        void **obj_list;
+        ElementType *obj_types;
+        int obj_count;
+    };
+
+    template <class F>
+    inline constexpr void element_visitor(F &&lambda, void* elem, ElementType type)
+    {
+        switch (type)
         {
-        case WAIT: return lambda(static_cast<Wait *>(elem->elem));
-        case PLACE: return lambda(static_cast<Place *>(elem->elem));
-        case DRAW: return lambda(static_cast<Draw *>(elem->elem));
-        case MORPH: return lambda(static_cast<Morph *>(elem->elem));
+        case WAIT: return lambda(static_cast<Wait *>(elem));
+        case PLACE: return lambda(static_cast<Place *>(elem));
+        case DRAW: return lambda(static_cast<Draw *>(elem));
+        case MORPH: return lambda(static_cast<Morph *>(elem));
+        case SIMULTANEOUS: return lambda(static_cast<Simultaneous *>(elem));
         default: std::cout << "Unknown element type\n";
         }
     }

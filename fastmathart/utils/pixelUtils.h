@@ -163,6 +163,7 @@ struct video_buffer_t
     int frames;
 
     video_buffer_t(int width, int height, int frames);
+    video_buffer_t(video_buffer_t &&other);
     void set_frame(const pixel_buffer_t &framebuffer, int frame_index);
     void set_all_frames(const pixel_buffer_t &framebuffer);
     pixel_buffer_t get_frame(int frame_index);

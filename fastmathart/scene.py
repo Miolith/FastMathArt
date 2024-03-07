@@ -1,42 +1,36 @@
-import ctypes
+from ctypes import POINTER, pointer, c_void_p, Structure, c_int, cast
+from fastmathart.basic_animation import AnimationBase
 
-ElementType = {
-    "NOTHING": 0,
-    "WAIT": 1,
-    "PLACE": 2,
-    "DRAW": 3,
-    "MORPH": 4
-}
-
-class SceneElement(ctypes.Structure):
+class SceneElement(Structure):
     _fields_ = [
-        ('type', ctypes.c_int),
-        ('elem', ctypes.POINTER(ctypes.c_void_p)),
-        ('next', ctypes.POINTER(ctypes.c_void_p)),
+        ('type', c_int),
+        ('elem', POINTER(c_void_p)),
+        ('next', POINTER(c_void_p)),
     ]
 
 class SceneBuilder:
     _head : SceneElement = None
     _tail : SceneElement = None
-    _list : list = []
+    _list : list[AnimationBase] = []
 
-    def append(self, *args):
+    def append(self, *args : AnimationBase):
         prev = None
         self._list += args
-        for arg in args:
+        for animation in args:
             element = SceneElement()
-            element.elem = ctypes.cast(ctypes.pointer(arg), ctypes.POINTER(ctypes.c_void_p))
+            anim_obj = animation.build()
 
-            class_name = arg.__class__.__name__.upper()
-            element.type = ElementType.get(class_name, ElementType["NOTHING"])
+            element.elem = cast(pointer(anim_obj), POINTER(c_void_p))
+
+            element.type = animation.anim_id if hasattr(animation, "anim_id") else 0
             if self._head is None:
                 self._head = element
             else:
-                self._tail.next = ctypes.cast(ctypes.pointer(arg), ctypes.POINTER(ctypes.c_void_p))
+                self._tail.next = cast(pointer(anim_obj), POINTER(c_void_p))
             self._tail = element
 
             if prev is not None:
-                prev.next = ctypes.cast(ctypes.pointer(element), ctypes.POINTER(ctypes.c_void_p))
+                prev.next = cast(pointer(element), POINTER(c_void_p))
             prev = element
         return self
     
