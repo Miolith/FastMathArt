@@ -10,7 +10,7 @@
 #define EXPORT
 #endif
 
-extern "C" EXPORT void render(PyAPI::SceneElement *scene, PyAPI::Config *config,
+extern "C" EXPORT void render(PyAPI::Scene *scene, PyAPI::Config *config,
                 const char *filename)
 {
     if (config == nullptr)
@@ -18,5 +18,5 @@ extern "C" EXPORT void render(PyAPI::SceneElement *scene, PyAPI::Config *config,
         std::cout << "No config specified" << std::endl;
         return;
     }
-    render_scene(scene, *config, filename);
+    render_scene(*scene, *config, filename);
 }

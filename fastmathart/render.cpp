@@ -470,7 +470,7 @@ void concat_animation_files(std::string_view filename)
     auto pipe = popen2(command.c_str(), "w");
 }
 
-void render_scene(PyAPI::SceneElement *elem, PyAPI::Config &config,
+void render_scene(PyAPI::Scene &scene, PyAPI::Config &config,
                   std::string_view filename)
 {
     std::cout << "Rendering scene to " << filename << "\n";
@@ -479,12 +479,11 @@ void render_scene(PyAPI::SceneElement *elem, PyAPI::Config &config,
     concat_file = std::ofstream("concat.txt");
 
 
-    while (elem != nullptr)
+    for(int i = 0; i < scene.element_count; i++)
     {
-        int name = 0;
+        auto elem = scene.elements[i];
         PyAPI::element_visitor(
-            [&](auto *element)
-            {
+            [&](auto *element) {
                 auto opt = std::optional<video_buffer_t>();
                 prepare_cache(scene_cache, *element);
                 render_element(element, config, frame_cache, opt);
@@ -494,9 +493,7 @@ void render_scene(PyAPI::SceneElement *elem, PyAPI::Config &config,
                     save_to_video_file(video, "temp.mp4", config.fps, config.width, config.height, video.frames);
                 }
             },
-            elem->elem, elem->type);
-        elem = elem->next;
-        name++;
+            elem.elem, elem.type);
     }
 
     concat_file.close();

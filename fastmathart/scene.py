@@ -5,37 +5,43 @@ class SceneElement(Structure):
     _fields_ = [
         ('type', c_int),
         ('elem', POINTER(c_void_p)),
-        ('next', POINTER(c_void_p)),
+    ]
+
+class Scene(Structure):
+    _fields_ = [
+        ('elements', POINTER(SceneElement)),
+        ('element_count', c_int),
     ]
 
 class SceneBuilder:
-    _head : SceneElement = None
-    _tail : SceneElement = None
     _list : list[AnimationBase] = []
 
+    def __init__(self):
+        self.scene_obj = Scene()
+
     def append(self, *args : AnimationBase):
-        prev = None
         self._list += args
-        for animation in args:
+        return self
+
+    
+    def build(self):
+        elem_list = []
+        for animation in self._list:
             element = SceneElement()
             anim_obj = animation.build()
 
             element.elem = cast(pointer(anim_obj), POINTER(c_void_p))
-
             element.type = animation.anim_id if hasattr(animation, "anim_id") else 0
-            if self._head is None:
-                self._head = element
-            else:
-                self._tail.next = cast(pointer(anim_obj), POINTER(c_void_p))
-            self._tail = element
+            elem_list.append(element)
+        
+        self.scene_obj.elements = (SceneElement * len(elem_list))(*elem_list)
+        self.scene_obj.element_count = len(elem_list)
 
-            if prev is not None:
-                prev.next = cast(pointer(element), POINTER(c_void_p))
-            prev = element
-        return self
-    
+        return self.scene_obj
+
     def get_scene(self):
-        return self._head
+        return tuple(self._list)
     
     def __getitem__(self, index: int):
         return self._list[index]
+    

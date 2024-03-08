@@ -1,6 +1,6 @@
 from ctypes import POINTER, c_char_p, cdll
 import platform
-from fastmathart.scene import SceneElement
+from fastmathart.scene import Scene
 from fastmathart.config import ConfigBinding
 from glob import glob
 
@@ -20,5 +20,5 @@ else:
 
 lib = cdll.LoadLibrary(files[0])
 
-lib.render.argtypes = [POINTER(SceneElement), POINTER(ConfigBinding), c_char_p]
+lib.render.argtypes = [POINTER(Scene), POINTER(ConfigBinding), c_char_p]
 lib.render.restype = None

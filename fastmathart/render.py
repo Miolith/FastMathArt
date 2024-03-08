@@ -27,7 +27,7 @@ def render(
     ):
     """Render a scene to a video file."""
     lib.render(
-        scene.get_scene(),
+        scene.build(),
         pointer(ConfigBinding()),
         c_char_p(filename.encode('utf-8'))
     )

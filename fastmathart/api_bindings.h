@@ -34,7 +34,12 @@ namespace PyAPI
     {
         ElementType type;
         void *elem;
-        SceneElement *next;
+    };
+
+    struct Scene
+    {
+        SceneElement *elements;
+        int element_count;
     };
 
     struct Wait
