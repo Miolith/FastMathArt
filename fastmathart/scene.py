@@ -19,7 +19,7 @@ class SceneBuilder:
     def __init__(self):
         self.scene_obj = Scene()
 
-    def append(self, *args : AnimationBase):
+    def add_sequence(self, *args : AnimationBase):
         self._list += args
         return self
 

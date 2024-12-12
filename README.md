@@ -66,7 +66,7 @@ rect = Rectangle(
     )
 )
 
-scene.append(
+scene.add_sequence(
     Draw(rect, seconds=2.0),
     Wait(seconds=0.5),
     Morph(rect, circle, seconds=2.0),
