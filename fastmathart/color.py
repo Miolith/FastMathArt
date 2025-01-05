@@ -1,47 +1,30 @@
-from ctypes import Structure, POINTER, c_void_p, c_uint8, c_float, cast, pointer, c_int
-from typing import Iterable, Union
-
-NOTYPE = 0
-RGB_3_FLOATS = 1
-RGB_3_BYTES = 2
-HEX_STRING = 3
-HSL = 4
+from ctypes import Structure, c_uint8, c_float, c_int
+from typing import Iterable, Union, SupportsFloat as Numeric
 
 class Color(Structure):
     """
     Color class python to C interface
     """
     _fields_ = [
-        ("value", POINTER(c_void_p)),
-        ("type", c_int)
+        ("r", c_float),
+        ("g", c_float),
+        ("b", c_float),
     ]
 
     def __init__(
         self,
-        r: Union[float, str] = None,
-        g: float = None,
-        b: float = None,
-        type: int = NOTYPE
+        r: float = 0.0,
+        g: float = 0.0,
+        b: float = 0.0,
     ):
-        self.type = type
-
-        if type == RGB_3_FLOATS:
-            self.value = cast(pointer((c_float * 3)(r, g, b)), POINTER(c_void_p))
-
-        elif type == RGB_3_BYTES:
-            self.value = cast(pointer((c_uint8 * 3)(r, g, b)), POINTER(c_void_p))
-
-        elif type == HEX_STRING:
-            self.value = cast(pointer(c_void_p(hex)), POINTER(c_void_p))
-
-        else:
-            self.value = None
-
+        self.r = r
+        self.g = g
+        self.b = b
 
 def rgb(
-        r: Union[float , int , Iterable],
-        g: Union[float , int],
-        b: Union[float , int]
+        r: Union[Numeric, Iterable],
+        g: Numeric,
+        b: Numeric
     ) -> Color:
     """
     Create a color object from RGB values
@@ -49,52 +32,105 @@ def rgb(
     Usage:
     ```
     red = rgb(1.0, 0.0, 0.0)
-    red = rgb(r=255, g=0, b=0)
     red = rgb([1.0, 0.0, 0.0])
-    red = rgb([255, 0, 0])
     red = rgb(np.array([1.0, 0.0, 0.0]))
 
     # Wrong usage
-    red = rgb(1.0, 0, 0) # <-- All values must be of the same type
-    red = rgb(300, 0, 0) # <-- Int values must be between 0 and 255
     red = rgb([1.0, 0.0]) # <-- Iterable must have 3 values
     red = rgb([1.0, 0.0, 0.0, 0.0]) # <-- Iterable must have 3 values
     ```
 
     Args:
-    r (float | int | Iterable): Red value or an iterable of RGB values
-    g (float | int): Green value
-    b (float | int): Blue value
+    r (Numeric | Iterable): Red value or an iterable of RGB values
+    g (Numeric): Green value
+    b (Numeric): Blue value
     """
-    if (isinstance(r, float) and isinstance(g, float) and isinstance(b, float)
-            and 0.0 <= r <= 1.0
-            and 0.0 <= g <= 1.0
-            and 0.0 <= b <= 1.0):
-        return Color(r, g, b, type=RGB_3_FLOATS)
-
-    elif (isinstance(r, int) and isinstance(g, int) and isinstance(b, int)
-            and 0 <= r <= 255
-            and 0 <= g <= 255
-            and 0 <= b <= 255):
-        
-        return Color(r, g, b, type=RGB_3_BYTES)
+    if all(isinstance(i, Numeric) and 0.0 <= float(i) <= 1.0 for i in (r, g, b)):
+        return Color(r, g, b)
     
-    elif (isinstance(r, Iterable) and len(r) == 3):
+    elif isinstance(r, Iterable) and len(r) == 3:
         return rgb(r[0], r[1], r[2])
 
     else:
-        raise ValueError("Invalid color values, must be either floats between 0.0 and 1.0 or integers between 0 and 255.")
+        raise ValueError("Invalid color values, must be numbers between 0.0 and 1.0")
     
+def rgb255(
+        r: Union[Numeric, Iterable],
+        g: Numeric,
+        b: Numeric
+    ) -> Color:
+    """
+    Create a color object from RGB values
+
+    Usage:
+    ```
+    red = rgb255(255, 0, 0)
+    red = rgb255([255, 0, 0])
+    red = rgb255(np.array([255, 0, 0]))
+
+    # Wrong usage
+    red = rgb255([255, 0]) # <-- Iterable must have 3 values
+    red = rgb255([255, 0, 0, 0]) # <-- Iterable must have 3 values
+    ```
+
+    Args:
+    r (Numeric | Iterable): Red value or an iterable of RGB values
+    g (Numeric): Green value
+    b (Numeric): Blue value
+    """
+    if (all(isinstance(i, Numeric) and 0 <= float(i) <= 255 for i in [r, g, b])):
+        return Color(*[float(i) / 255.0 for i in [r, g, b]])
+    
+    elif (isinstance(r, Iterable) and len(r) == 3):
+        return rgb255(r[0], r[1], r[2])
+
+    else:
+        raise ValueError("Invalid color values, must be integers between 0 and 255")
+
 
 def hex(hex: str) -> Color:
     if hex[0] == "#":
         hex = hex[1:]
-    
-    if len(hex) != 6:
-        raise ValueError("Invalid hex string, must be 6 characters long.")
-    c = Color(hex, type=HEX_STRING)
-    return c
 
-def hsl(h: int, s: int, l: int) -> Color:
-    c = Color(h, s, l, type=HSL)
-    return c
+    if len(hex) != 6:
+        raise ValueError("Invalid hex color, must be 6 characters long, got {}".format(len(hex)))
+    
+    r = int(hex[:2], 16) / 255.0
+    g = int(hex[2:4], 16) / 255.0
+    b = int(hex[4:], 16) / 255.0
+    return Color(r, g, b)
+
+def hsl(
+        h: Numeric,
+        s: Numeric,
+        l: Numeric
+    ) -> Color:
+
+    if h < 0 or h > 360:
+        raise ValueError("Invalid hue value, must be between 0 and 360")
+    
+    if s < 0 or s > 1:
+        raise ValueError("Invalid saturation value, must be between 0 and 1")
+    
+    if l < 0 or l > 1:
+        raise ValueError("Invalid lightness value, must be between 0 and 1")
+    
+    # Convert HSL to RGB
+    c = (1 - abs(2 * l - 1)) * s
+    x = c * (1 - abs((h / 60) % 2 - 1))
+    m = l - c / 2
+
+    if 0 <= h < 60:
+        r, g, b = c, x, 0
+    elif 60 <= h < 120:
+        r, g, b = x, c, 0
+    elif 120 <= h < 180:
+        r, g, b = 0, c, x
+    elif 180 <= h < 240:
+        r, g, b = 0, x, c
+    elif 240 <= h < 300:
+        r, g, b = x, 0, c
+    else:
+        r, g, b = c, 0, x
+
+    return Color(r + m, g + m, b + m)

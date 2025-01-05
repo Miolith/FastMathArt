@@ -92,19 +92,11 @@ namespace PyAPI
         }
     }
 
-    enum ColorType
-    {
-        NOTYPE = 0,
-        RGB_3_FLOATS = 1,
-        RGB_3_BYTES = 2,
-        HEX_STRING = 3,
-        HSL = 4
-    };
-
     struct Color
     {
-        void *value;
-        ColorType type;
+        float r;
+        float g;
+        float b;
     };
 
     struct Properties

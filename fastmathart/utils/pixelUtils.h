@@ -131,11 +131,8 @@ struct _color_implem<LinearRGB_f32>
     color_t<LinearRGB_8> toLinearRGB_8();
 };
 
-template <pixel_format P>
-color_t<P> cast_to_color_t(PyAPI::Color &color);
-
-template <>
-color_t<RGB_f32> cast_to_color_t<RGB_f32>(PyAPI::Color &color);
+color_t<RGB_f32> cast_to_color_t_RGB_f32(const PyAPI::Color &color);
+color_t<RGB_8> cast_to_color_t_RGB_8(const PyAPI::Color &color);
 
 struct pixel_buffer_t
 {

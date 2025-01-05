@@ -212,31 +212,18 @@ color_t<LinearRGB_8> _color_implem<LinearRGB_f32>::toLinearRGB_8()
 Casting python color messages to C++ color_t
 ======================================
 */
-template <>
-color_t<RGB_8> cast_to_color_t<RGB_8>(PyAPI::Color &color)
+
+color_t<RGB_f32> cast_to_color_t_RGB_f32(const PyAPI::Color &color)
 {
-    return cast_to_color_t<RGB_f32>(color).toRGB_8();
+    return color_t<RGB_f32>(color.r, color.g, color.b);
 }
 
-template <>
-color_t<RGB_f32> cast_to_color_t<RGB_f32>(PyAPI::Color &color)
+color_t<RGB_8> cast_to_color_t_RGB_8(const PyAPI::Color &color)
 {
-    switch (color.type)
-    {
-    case PyAPI::RGB_3_BYTES: {
-        uint8_t *value = reinterpret_cast<uint8_t *>(color.value);
-        return color_t<RGB_8>(value[0], value[1], value[2]).toRGB_f32();
-        break;
-    }
-    case PyAPI::RGB_3_FLOATS: {
-        float *value = reinterpret_cast<float *>(color.value);
-        return color_t<RGB_f32>(value[0], value[1], value[2]);
-        break;
-    }
-    default:
-        throw std::runtime_error("Invalid color type "
-                                 + std::to_string(color.type));
-    }
+    return color_t<RGB_8>(
+        static_cast<uint8_t>(color.r * 255.0f),
+        static_cast<uint8_t>(color.g * 255.0f),
+        static_cast<uint8_t>(color.b * 255.0f));
 }
 
 /*

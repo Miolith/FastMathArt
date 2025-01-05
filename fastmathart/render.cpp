@@ -158,7 +158,7 @@ void render_line(math::fvec3 point1, math::fvec3 point2,
     int err = dx - dy;
 
     color_t<RGB_8> color = (properties.color != nullptr)
-        ? cast_to_color_t<RGB_8>(*properties.color)
+        ? cast_to_color_t_RGB_8(*properties.color)
         : color_t<RGB_8>(255, 255, 255);
 
     int thickness = ndc_to_raster_space(properties.thickness, frame_cache.width,
@@ -389,16 +389,18 @@ void render_element(PyAPI::Morph *elem, PyAPI::Config &config,
 
     auto props = *src_props;
 
-    color_t<RGB_f32> src_color = cast_to_color_t<RGB_f32>(*src_props->color);
-    color_t<RGB_f32> dest_color = cast_to_color_t<RGB_f32>(*dest_props->color);
+    color_t<RGB_f32> src_color = cast_to_color_t_RGB_f32(*src_props->color);
+    color_t<RGB_f32> dest_color = cast_to_color_t_RGB_f32(*dest_props->color);
 
     for (int i = 0; i < frames; i++)
     {
         float t = float(i) / float(frames - 1);
         auto color = blend(src_color, dest_color, t);
 
-        float color_values[3] = { color.x, color.y, color.z };
-        props.color->value = color_values;
+        props.color->r = color.r;
+        props.color->g = color.g;
+        props.color->b = color.b;
+
         auto morphed_beziers =
             math::interpolatePaths(src_beziers, dest_beziers, t);
         
