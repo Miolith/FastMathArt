@@ -67,27 +67,6 @@ math::BezierPath bezier_curve_approx(const PyAPI::Circle &circle)
     return path;
 }
 
-math::BezierPath bezier_curve_approx(PyAPI::Rectangle &rect)
-{
-    std::vector<math::CubicBezier> beziers(4);
-
-    auto center =
-        math::fvec3(rect.properties->x, rect.properties->y, rect.properties->z);
-
-    auto upper_left = center + math::fvec3(-rect.width / 2, rect.height / 2, 0);
-    auto upper_right = center + math::fvec3(rect.width / 2, rect.height / 2, 0);
-    auto lower_right =
-        center + math::fvec3(rect.width / 2, -rect.height / 2, 0);
-    auto lower_left =
-        center + math::fvec3(-rect.width / 2, -rect.height / 2, 0);
-
-    beziers[0] = math::CubicBezier::straightLine(upper_left, upper_right);
-    beziers[1] = math::CubicBezier::straightLine(upper_right, lower_right);
-    beziers[2] = math::CubicBezier::straightLine(lower_right, lower_left);
-    beziers[3] = math::CubicBezier::straightLine(lower_left, upper_left);
-
-    return math::BezierPath(beziers);
-}
 
 math::BezierPath bezier_curve_approx(PyAPI::Polyline &polyline)
 {
@@ -100,6 +79,7 @@ math::BezierPath bezier_curve_approx(PyAPI::Polyline &polyline)
     }
     return math::BezierPath(beziers);
 }
+
 math::vec3<int> ndc_to_raster_space(math::fvec3 point, const int width,
                                     const int height)
 {

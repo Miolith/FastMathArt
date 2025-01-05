@@ -26,8 +26,7 @@ namespace PyAPI
     {
         NO_TYPE = 0,
         CIRCLE = 1,
-        RECTANGLE = 2,
-        POLYLINES = 3
+        POLYLINES = 2
     };
 
     struct SceneElement
@@ -116,13 +115,6 @@ namespace PyAPI
         Properties *properties;
     };
 
-    struct Rectangle
-    {
-        float width;
-        float height;
-        Properties *properties;
-    };
-
     struct Polyline
     {
         float *x;
@@ -137,7 +129,6 @@ namespace PyAPI
         switch (type)
         {
         case CIRCLE: return lambda(static_cast<Circle *>(shape));
-        case RECTANGLE: return lambda(static_cast<Rectangle *>(shape));
         case POLYLINES: return lambda(static_cast<Polyline *>(shape));
         default: std::cout << "Unknown shape type\n";
         }

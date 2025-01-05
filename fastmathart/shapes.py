@@ -5,8 +5,7 @@ import math
 
 NO_TYPE = 0
 CIRCLE = 1
-RECTANGLE = 2
-POLYLINES = 3
+POLYLINES = 2
 
 class Circle(Structure):
     _fields_ = [
@@ -21,26 +20,6 @@ class Circle(Structure):
     ):
         self.shape_id = CIRCLE
         self.radius = radius
-        if properties is not None:
-            self.properties = pointer(properties)
-                 
-
-class Rectangle(Structure):
-    _fields_ = [
-        ("width", c_float),
-        ("height", c_float),
-        ("properties", POINTER(Properties))
-    ]
-
-    def __init__(
-        self,
-        width: float = 1.0,
-        height: float = 1.0,
-        properties: Properties = None
-    ):
-        self.shape_id = RECTANGLE
-        self.width = width
-        self.height = height
         if properties is not None:
             self.properties = pointer(properties)
 
@@ -68,11 +47,17 @@ class Polylines(Structure):
         if properties is not None:
             self.properties = pointer(properties)
 
+
 def Polygon(x: list, y: list, properties: Properties = None):
     x.append(x[0])
     y.append(y[0])
     return Polylines(x, y, properties)
 
+
+def Rectangle(width: float, height: float, properties: Properties = None):
+    x = [width / 2, width / 2, -width / 2, -width / 2, width / 2]
+    y = [height / 2, -height / 2, -height / 2, height / 2, height / 2]
+    return Polylines(x, y, properties)
 
 def Line(x: list, y: list, properties: Properties = None):
     return Polylines(x[:2], y[:2], properties)
